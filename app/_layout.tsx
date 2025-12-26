@@ -1,0 +1,165 @@
+import { API_BASE_URL } from "@/constants/Config";
+import {
+  ClerkLoaded,
+  ClerkLoading,
+  ClerkProvider,
+  useAuth,
+} from "@clerk/clerk-expo";
+import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
+import { Stack, useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useRef } from "react";
+import { View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+
+// Notifications.setNotificationHandler({
+//   handleNotification: async () =>
+//     ({
+//       shouldShowAlert: true,
+//       shouldPlaySound: true,
+//       shouldSetBadge: false,
+//     }) as Notifications.NotificationBehavior,
+// });
+
+/* ================= TOKEN CACHE ================= */
+const tokenCache = {
+  async getToken(key: string) {
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch {
+      return null;
+    }
+  },
+  async saveToken(key: string, value: string) {
+    try {
+      return await SecureStore.setItemAsync(key, value);
+    } catch {
+      return;
+    }
+  },
+};
+
+/* ================= INNER LAYOUT (Child Component) ================= */
+// 🟢 We moved all logic here so it sits INSIDE ClerkProvider
+function AppLayout() {
+  const router = useRouter();
+  const { getToken, isSignedIn } = useAuth();
+  const registerRef = useRef(false);
+
+  // inside AppLayout function in app/_layout.tsx
+  // inside AppLayout function in app/_layout.tsx
+  useEffect(() => {
+    if (!isSignedIn || registerRef.current) return;
+
+    (async () => {
+      try {
+        // 🟢 CHANGE: Use projectId as the check instead of isDevice
+        // This ensures the build has its native configuration loaded
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+
+        if (!projectId) {
+          console.log(
+            "⚠️ Skipping push registration: Missing EAS Project ID in app.json"
+          );
+          return;
+        }
+
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== "granted") {
+          console.log("❌ Notification permissions denied");
+          return;
+        }
+
+        // 🟢 Get the token using the explicit projectId
+        const tokenData = await Notifications.getExpoPushTokenAsync({
+          projectId: Constants.expoConfig?.extra?.eas.projectId,
+        });
+
+        const expoPushToken = tokenData.data;
+        console.log("🚀 Registered Token:", expoPushToken);
+
+        const clerkToken = await getToken();
+        if (!clerkToken) return;
+
+        const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${clerkToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ expoPushToken }),
+        });
+
+        if (response.ok) {
+          registerRef.current = true;
+          console.log("✅ Push token stored in DB");
+        }
+      } catch (err: any) {
+        console.error("❌ Push registration error:", err.message);
+      }
+    })();
+  }, [isSignedIn]);
+  // 🔔 NOTIFICATION TAP HANDLER
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
+
+        if (data?.screen === "complaint-details" && data?.complaintId) {
+          router.push({
+            pathname: "/complain-details",
+            params: { id: String(data.complaintId) },
+          });
+        }
+
+        if (data?.screen === "history") {
+          router.push("/(tabs)/history");
+        }
+      }
+    );
+    return () => sub.remove();
+  }, []);
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(tabs)" />
+    </Stack>
+  );
+}
+
+/* ================= ROOT LAYOUT (Parent) ================= */
+export default function RootLayout() {
+  const publishableKey =
+    (Constants.expoConfig &&
+      (Constants.expoConfig.extra as any)?.CLERK_PUBLISHABLE_KEY) ||
+    process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+    "";
+
+  if (!publishableKey) {
+    throw new Error("Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in .env");
+  }
+
+  return (
+    <SafeAreaProvider>
+      <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+        {/* 🟢 1. SHOW THIS WHILE LOADING */}
+        <ClerkLoading>
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            {/* This prevents the white screen while Clerk starts up */}
+          </View>
+        </ClerkLoading>
+
+        {/* 🟢 2. SHOW THIS WHEN LOADED */}
+        <ClerkLoaded>
+          {/* Remove 'fallback' prop here */}
+          <AppLayout />
+        </ClerkLoaded>
+      </ClerkProvider>
+    </SafeAreaProvider>
+  );
+}
