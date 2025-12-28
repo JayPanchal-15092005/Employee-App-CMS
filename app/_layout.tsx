@@ -49,48 +49,51 @@ function AppLayout() {
   const registerRef = useRef(false);
 
   // 🔔 REACTIVATE PUSH REGISTRATION
-  useEffect(() => {
-    if (!isSignedIn || registerRef.current) return;
+   useEffect(() => {
+  if (!isLoaded || !isSignedIn) return;
 
-    (async () => {
-      try {
-        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-        if (!projectId) {
-          console.log("⚠️ Missing EAS Project ID");
-          return;
-        }
-
-        const { status } = await Notifications.requestPermissionsAsync();
-        if (status !== "granted") return;
-
-        // 🟢 Get Token
-        const tokenData = await Notifications.getExpoPushTokenAsync({
-          projectId: projectId,
-        });
-        const expoPushToken = tokenData.data;
-
-        const clerkToken = await getToken();
-        if ( !clerkToken ) return;
-        
-        // 🟢 Send to your Render backend
-        const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${clerkToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ expoPushToken }),
-        });
-
-        if (response.ok) {
-          registerRef.current = true;
-          console.log("✅ Token successfully registered in DB");
-        }
-      } catch (err: any) {
-        console.error("❌ Push registration failed:", err.message);
+  (async () => {
+    try {
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      if (!projectId) {
+        console.log("❌ Missing EAS projectId");
+        return;
       }
-    })();
-  }, [isSignedIn])
+
+      const permission = await Notifications.getPermissionsAsync();
+      if (permission.status !== "granted") {
+        const req = await Notifications.requestPermissionsAsync();
+        if (req.status !== "granted") return;
+      }
+
+      const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+      const expoPushToken = tokenData.data;
+
+      console.log("📱 Expo token:", expoPushToken);
+
+      const clerkToken = await getToken({ template: "default" });
+      if (!clerkToken) {
+        console.log("❌ Clerk token missing");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/api/devices/register`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${clerkToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ expoPushToken }),
+      });
+
+      const data = await res.json();
+      console.log("✅ Register response:", data);
+    } catch (e) {
+      console.error("❌ Push registration error:", e);
+    }
+  })();
+}, [isLoaded, isSignedIn]);
+
 
   useEffect(() => {
     if( !isLoaded ) return;
