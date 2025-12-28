@@ -51,34 +51,44 @@ function AppLayout() {
   // 🔔 REACTIVATE PUSH REGISTRATION
    
   useEffect(() => {
-  if (!isLoaded || !isSignedIn) return;
+  // 🟢 1. Don't run if not loaded, not signed in, or already registered this session
+  if (!isLoaded || !isSignedIn || registerRef.current) return;
 
   (async () => {
     try {
-      console.log("🔔 Push registration started");
+      console.log("🔔 Push registration started...");
 
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
       if (!projectId) {
-        console.log("❌ Missing projectId");
+        console.log("❌ Missing projectId in app.json");
         return;
       }
 
-      const perm = await Notifications.getPermissionsAsync();
-      if (perm.status !== "granted") {
-        const req = await Notifications.requestPermissionsAsync();
-        if (req.status !== "granted") return;
+      // 🟢 2. Check/Request Permissions
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        console.log("❌ Permission not granted");
+        return;
       }
 
+      // 🟢 3. Get the Token
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       const expoPushToken = tokenData.data;
+      console.log("📱 Expo token generated:", expoPushToken);
 
-      console.log("📱 Expo token:", expoPushToken);
+      // 🟢 4. Get Clerk JWT
+      const clerkToken = await getToken(); 
+      if (!clerkToken) {
+        console.log("❌ Clerk token null");
+        return;
+      }
 
-      const clerkToken = await getToken({ template: "backend" });
-      console.log("🔐 Clerk token:", clerkToken ? "OK" : "NULL");
-
-      if (!clerkToken) return;
-
+      // 🟢 5. Send to Render Backend
       const res = await fetch(`${API_BASE_URL}/api/devices/register`, {
         method: "POST",
         headers: {
@@ -88,16 +98,18 @@ function AppLayout() {
         body: JSON.stringify({ expoPushToken }),
       });
 
-      const data = await res.json();
-      console.log("✅ Register response:", data);
+      if (res.ok) {
+        registerRef.current = true; // ✅ Prevent multiple registrations
+        console.log("✅ Token saved to Database successfully");
+      } else {
+        const errorText = await res.text();
+        console.error("❌ Backend registration failed:", errorText);
+      }
     } catch (e) {
-      console.error("❌ Push error", e);
+      console.error("❌ Critical Push error:", e);
     }
   })();
 }, [isLoaded, isSignedIn]);
-
-
-
 
   useEffect(() => {
     if( !isLoaded ) return;
