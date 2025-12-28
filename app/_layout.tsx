@@ -49,46 +49,36 @@ function AppLayout() {
   const registerRef = useRef(false);
 
   // 🔔 REACTIVATE PUSH REGISTRATION
+   
   useEffect(() => {
   if (!isLoaded || !isSignedIn) return;
 
   (async () => {
     try {
-      console.log("🔔 Starting push registration");
+      console.log("🔔 Push registration started");
 
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
       if (!projectId) {
-        console.log("❌ Missing EAS projectId");
+        console.log("❌ Missing projectId");
         return;
       }
 
-      // 1️⃣ Permission
-      const permission = await Notifications.getPermissionsAsync();
-      if (permission.status !== "granted") {
+      const perm = await Notifications.getPermissionsAsync();
+      if (perm.status !== "granted") {
         const req = await Notifications.requestPermissionsAsync();
-        if (req.status !== "granted") {
-          console.log("❌ Notification permission denied");
-          return;
-        }
+        if (req.status !== "granted") return;
       }
 
-      // 2️⃣ Get Expo token
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       const expoPushToken = tokenData.data;
 
-      console.log("📱 Expo Push Token:", expoPushToken);
+      console.log("📱 Expo token:", expoPushToken);
 
-      // 3️⃣ Get Clerk JWT (THIS IS THE KEY FIX)
-      const clerkToken = await getToken({ template: "default" });
+      const clerkToken = await getToken({ template: "backend" });
+      console.log("🔐 Clerk token:", clerkToken ? "OK" : "NULL");
 
-      if (!clerkToken) {
-        console.log("❌ Clerk token not ready");
-        return;
-      }
+      if (!clerkToken) return;
 
-      console.log("🔐 Clerk token OK");
-
-      // 4️⃣ Send to backend
       const res = await fetch(`${API_BASE_URL}/api/devices/register`, {
         method: "POST",
         headers: {
@@ -99,12 +89,13 @@ function AppLayout() {
       });
 
       const data = await res.json();
-      console.log("✅ Token saved:", data);
-    } catch (err) {
-      console.error("❌ Push registration error:", err);
+      console.log("✅ Register response:", data);
+    } catch (e) {
+      console.error("❌ Push error", e);
     }
   })();
 }, [isLoaded, isSignedIn]);
+
 
 
 
