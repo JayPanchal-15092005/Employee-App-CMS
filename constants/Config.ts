@@ -1,3 +1,3 @@
 // export const API_BASE_URL = "http://localhost:4000";
-export const API_BASE_URL = "http://192.168.0.132:4000";
-// export const API_BASE_URL = "https://cms-backend-pbfz.onrender.com";
+// export const API_BASE_URL = "http://192.168.0.132:4000";
+export const API_BASE_URL = "https://cms-backend-pbfz.onrender.com";
