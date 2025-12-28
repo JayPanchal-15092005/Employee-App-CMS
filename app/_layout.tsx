@@ -55,7 +55,10 @@ function AppLayout() {
     (async () => {
       try {
         const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-        if (!projectId) return;
+        if (!projectId) {
+          console.log("⚠️ Missing EAS Project ID");
+          return;
+        }
 
         const { status } = await Notifications.requestPermissionsAsync();
         if (status !== "granted") return;
@@ -67,9 +70,10 @@ function AppLayout() {
         const expoPushToken = tokenData.data;
 
         const clerkToken = await getToken();
+        if ( !clerkToken ) return;
         
         // 🟢 Send to your Render backend
-        await fetch(`${API_BASE_URL}/api/devices/register`, {
+        const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${clerkToken}`,
@@ -78,10 +82,12 @@ function AppLayout() {
           body: JSON.stringify({ expoPushToken }),
         });
 
-        registerRef.current = true;
-        console.log("✅ Token saved to DB:", expoPushToken);
-      } catch (err) {
-        console.error("❌ Registration failed:", err);
+        if (response.ok) {
+          registerRef.current = true;
+          console.log("✅ Token successfully registered in DB");
+        }
+      } catch (err: any) {
+        console.error("❌ Push registration failed:", err.message);
       }
     })();
   }, [isSignedIn])
