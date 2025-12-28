@@ -49,34 +49,46 @@ function AppLayout() {
   const registerRef = useRef(false);
 
   // 🔔 REACTIVATE PUSH REGISTRATION
-   useEffect(() => {
+  useEffect(() => {
   if (!isLoaded || !isSignedIn) return;
 
   (async () => {
     try {
+      console.log("🔔 Starting push registration");
+
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
       if (!projectId) {
         console.log("❌ Missing EAS projectId");
         return;
       }
 
+      // 1️⃣ Permission
       const permission = await Notifications.getPermissionsAsync();
       if (permission.status !== "granted") {
         const req = await Notifications.requestPermissionsAsync();
-        if (req.status !== "granted") return;
+        if (req.status !== "granted") {
+          console.log("❌ Notification permission denied");
+          return;
+        }
       }
 
+      // 2️⃣ Get Expo token
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       const expoPushToken = tokenData.data;
 
-      console.log("📱 Expo token:", expoPushToken);
+      console.log("📱 Expo Push Token:", expoPushToken);
 
+      // 3️⃣ Get Clerk JWT (THIS IS THE KEY FIX)
       const clerkToken = await getToken({ template: "default" });
+
       if (!clerkToken) {
-        console.log("❌ Clerk token missing");
+        console.log("❌ Clerk token not ready");
         return;
       }
 
+      console.log("🔐 Clerk token OK");
+
+      // 4️⃣ Send to backend
       const res = await fetch(`${API_BASE_URL}/api/devices/register`, {
         method: "POST",
         headers: {
@@ -87,12 +99,13 @@ function AppLayout() {
       });
 
       const data = await res.json();
-      console.log("✅ Register response:", data);
-    } catch (e) {
-      console.error("❌ Push registration error:", e);
+      console.log("✅ Token saved:", data);
+    } catch (err) {
+      console.error("❌ Push registration error:", err);
     }
   })();
 }, [isLoaded, isSignedIn]);
+
 
 
   useEffect(() => {
