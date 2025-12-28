@@ -50,46 +50,34 @@ function AppLayout() {
 
   // 🔔 REACTIVATE PUSH REGISTRATION
    
-  useEffect(() => {
-  // 🟢 1. Don't run if not loaded, not signed in, or already registered this session
-  if (!isLoaded || !isSignedIn || registerRef.current) return;
+   useEffect(() => {
+  if (!isLoaded || !isSignedIn) return;
 
-  (async () => {
+  const registerDevice = async () => {
     try {
-      console.log("🔔 Push registration started...");
-
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      if (!projectId) {
-        console.log("❌ Missing projectId in app.json");
-        return;
+      if (!projectId) return;
+
+      // 🟢 1. Check Permissions
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        const { status: newStatus } = await Notifications.requestPermissionsAsync();
+        if (newStatus !== 'granted') return;
       }
 
-      // 🟢 2. Check/Request Permissions
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== 'granted') {
-        console.log("❌ Permission not granted");
-        return;
-      }
-
-      // 🟢 3. Get the Token
+      // 🟢 2. Get Expo Token
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       const expoPushToken = tokenData.data;
-      console.log("📱 Expo token generated:", expoPushToken);
 
-      // 🟢 4. Get Clerk JWT
+      // 🟢 3. Get Clerk JWT (Added a template if you use one, otherwise leave empty)
       const clerkToken = await getToken(); 
       if (!clerkToken) {
-        console.log("❌ Clerk token null");
+        console.log("⚠️ Clerk JWT not ready, retrying...");
         return;
       }
 
-      // 🟢 5. Send to Render Backend
-      const res = await fetch(`${API_BASE_URL}/api/devices/register`, {
+      // 🟢 4. Send to Backend
+      const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${clerkToken}`,
@@ -98,17 +86,18 @@ function AppLayout() {
         body: JSON.stringify({ expoPushToken }),
       });
 
-      if (res.ok) {
-        registerRef.current = true; // ✅ Prevent multiple registrations
-        console.log("✅ Token saved to Database successfully");
+      if (response.ok) {
+        console.log("✅ Registered successfully to Render");
       } else {
-        const errorText = await res.text();
-        console.error("❌ Backend registration failed:", errorText);
+        const errText = await response.text();
+        console.error("❌ Backend error:", errText);
       }
     } catch (e) {
-      console.error("❌ Critical Push error:", e);
+      console.error("❌ Registration failed:", e);
     }
-  })();
+  };
+
+  registerDevice();
 }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
