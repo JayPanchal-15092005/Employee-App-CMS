@@ -1,19 +1,20 @@
 // app/(tabs)/form.tsx - Beautiful Modern Design
 import { useAuth } from "@clerk/clerk-expo";
 import { Picker } from "@react-native-picker/picker";
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -25,14 +26,21 @@ const ASSETS = [
   "Software",
   "CCTV",
   "Keyboard",
+  "Desktop",
+  "WebCAM",
+  "Monitor",
   "Mouse",
   "Laptop",
   "WiFi",
   "Cartridge Toner",
-  "Power Connection / Extension Board",
+  "Extension Board",
   "Telephone Extension",
   "Wave Issue",
+  "Mobile Phone",
+  "Other Complaint",
 ];
+
+const LOGO_IMG = require("@/assets/images/icon.png");
 
 export default function ComplaintScreen() {
   const insets = useSafeAreaInsets();
@@ -69,10 +77,16 @@ export default function ComplaintScreen() {
     }
 
     if (!department.trim()) {
-      return Alert.alert("Validation", "Department is required");
+      return Alert.alert("Validation", "Department is required field");
     }
     if (!detail.trim()) {
-      return Alert.alert("Validation", "Complaint Detail is required");
+      return Alert.alert("Validation", "Complaint Detail is required field");
+    }
+    if (!name.trim()) {
+      return Alert.alert("Validation", "Name is required field field");
+    }
+    if (!email.trim()) {
+      return Alert.alert("Validation", "Email is required field");
     }
 
     const assets = Object.keys(selected).filter((k) => selected[k]);
@@ -145,13 +159,18 @@ export default function ComplaintScreen() {
     <View style={styles.wrapper}>
       {/* Gradient Header */}
       <LinearGradient
-        colors={['#3b82f6', '#2563eb', '#1d4ed8']}
+        colors={["#3b82f6", "#2563eb", "#1d4ed8"]}
         style={[styles.header, { paddingTop: insets.top + 10 }]}
       >
         <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.headerTitle}>CMS FORM</Text>
-            {/* <Text style={styles.headerSubtitle}>Submit your request</Text> */}
+          {/* 🟢 Logo and Title Container */}
+          <View style={styles.titleContainer}>
+            <Image
+              source={LOGO_IMG}
+              style={styles.headerLogo}
+              resizeMode="contain"
+             />
+             <Text style={styles.headerTitle}>CMS FORM</Text>
           </View>
           <TouchableOpacity
             style={styles.signOutButton}
@@ -187,17 +206,17 @@ export default function ComplaintScreen() {
             </View>
 
             <TextInputField
-              label="Your Name (optional)"
+              label="Full Name"
               value={name}
               onChangeText={(text) => setName(text)}
               placeholder="Enter your name"
             />
 
             <TextInputField
-              label="Your Email (optional)"
+              label="Email"
               value={email}
               onChangeText={setEmail}
-              placeholder="you@company.com"
+              placeholder="you@gmail.com"
               keyboardType="email-address"
             />
 
@@ -213,7 +232,7 @@ export default function ComplaintScreen() {
               label="Department *"
               value={department}
               onChangeText={setDepartment}
-              placeholder="e.g., Finance, IT, HR"
+              placeholder="e.g. IT, HR"
             />
 
             {/* Assets Selection */}
@@ -228,11 +247,11 @@ export default function ComplaintScreen() {
                   nestedScrollEnabled={true}
                 >
                   {ASSETS.map((asset, index) => (
-                    <View 
+                    <View
                       key={asset}
                       style={[
                         styles.assetItemWrapper,
-                        index !== ASSETS.length - 1 && styles.assetItemBorder
+                        index !== ASSETS.length - 1 && styles.assetItemBorder,
                       ]}
                     >
                       <AssetCheckbox
@@ -276,10 +295,10 @@ export default function ComplaintScreen() {
                 <Text style={styles.labelIcon}>👷</Text> Assign To
               </Text>
               <View style={styles.pickerContainer}>
-                <Picker 
-                  selectedValue={toWhom} 
+                <Picker
+                  selectedValue={toWhom}
                   onValueChange={setToWhom}
-                  style={[styles.picker, { color: '#0f172a' }]}
+                  style={[styles.picker, { color: "#0f172a" }]}
                   dropdownIconColor="#0f172a"
                 >
                   <Picker.Item label="Select person..." value="" />
@@ -294,15 +313,21 @@ export default function ComplaintScreen() {
                 <Text style={styles.labelIcon}>⚡</Text> Priority Level
               </Text>
               <View style={styles.priorityContainer}>
-                {['Low', 'Medium', 'High'].map((level) => (
+                {["Low", "Medium", "High"].map((level) => (
                   <TouchableOpacity
                     key={level}
                     style={[
                       styles.priorityChip,
                       priority === level && styles.priorityChipActive,
-                      priority === level && level === 'Low' && styles.priorityLow,
-                      priority === level && level === 'Medium' && styles.priorityMedium,
-                      priority === level && level === 'High' && styles.priorityHigh,
+                      priority === level &&
+                        level === "Low" &&
+                        styles.priorityLow,
+                      priority === level &&
+                        level === "Medium" &&
+                        styles.priorityMedium,
+                      priority === level &&
+                        level === "High" &&
+                        styles.priorityHigh,
                     ]}
                     onPress={() => setPriority(level)}
                     activeOpacity={0.7}
@@ -325,7 +350,9 @@ export default function ComplaintScreen() {
               {loading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color="#2563eb" />
-                  <Text style={styles.loadingText}>Submitting your complaint...</Text>
+                  <Text style={styles.loadingText}>
+                    Submitting your complaint...
+                  </Text>
                 </View>
               ) : (
                 <TouchableOpacity
@@ -335,12 +362,14 @@ export default function ComplaintScreen() {
                   activeOpacity={0.9}
                 >
                   <LinearGradient
-                    colors={['#3b82f6', '#2563eb']}
+                    colors={["#3b82f6", "#2563eb"]}
                     style={styles.submitButtonGradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                   >
-                    <Text style={styles.submitButtonText}>Submit Complaint</Text>
+                    <Text style={styles.submitButtonText}>
+                      Submit Complaint
+                    </Text>
                     <Text style={styles.submitButtonIcon}>→</Text>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -356,47 +385,58 @@ export default function ComplaintScreen() {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
   },
   header: {
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
-    shadowColor: '#1d4ed8',
+    shadowColor: "#1d4ed8",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
   headerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 10,
+  },
+  headerLogo: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Light backing for visibility
   },
   headerTitle: {
     fontSize: 21,
-    fontWeight: '800',
-    color: '#ffffff',
+    fontWeight: "800",
+    color: "#ffffff",
     letterSpacing: 0.5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#dbeafe',
+    color: "#dbeafe",
     marginTop: 4,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   signOutButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   signOutText: {
-    color: '#ffffff',
-    fontWeight: '600',
+    color: "#ffffff",
+    fontWeight: "600",
     fontSize: 14,
   },
   keyboardView: {
@@ -407,27 +447,27 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   formCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 20,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   sectionIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#eff6ff',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#eff6ff",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   sectionIcon: {
@@ -435,17 +475,16 @@ const styles = StyleSheet.create({
   },
   sectionHeaderText: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
+    fontWeight: "700",
+    color: "#1e293b",
   },
   section: {
     marginTop: 16,
-
   },
   label: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#334155',
+    fontWeight: "600",
+    color: "#334155",
     marginBottom: 8,
   },
   labelIcon: {
@@ -453,11 +492,11 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   assetsContainer: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    overflow: 'hidden',
+    borderColor: "#e2e8f0",
+    overflow: "hidden",
   },
   assetsScroll: {
     maxHeight: 240,
@@ -468,21 +507,21 @@ const styles = StyleSheet.create({
   },
   assetItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: "#f1f5f9",
   },
   pickerContainer: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    overflow: 'hidden',
+    borderColor: "#e2e8f0",
+    overflow: "hidden",
   },
   picker: {
     height: 55,
-    width: '100%'
+    width: "100%",
   },
   priorityContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   priorityChip: {
@@ -490,73 +529,73 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
     borderWidth: 2,
-    borderColor: '#e2e8f0',
-    alignItems: 'center',
+    borderColor: "#e2e8f0",
+    alignItems: "center",
   },
   priorityChipActive: {
     borderWidth: 2,
   },
   priorityLow: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#22c55e',
+    backgroundColor: "#dcfce7",
+    borderColor: "#22c55e",
   },
   priorityMedium: {
-    backgroundColor: '#fef3c7',
-    borderColor: '#f59e0b',
+    backgroundColor: "#fef3c7",
+    borderColor: "#f59e0b",
   },
   priorityHigh: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#ef4444',
+    backgroundColor: "#fee2e2",
+    borderColor: "#ef4444",
   },
   priorityChipText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#64748b',
+    fontWeight: "600",
+    color: "#64748b",
   },
   priorityChipTextActive: {
-    color: '#1e293b',
+    color: "#1e293b",
   },
   submitSection: {
     marginTop: 32,
   },
   submitButton: {
     borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#2563eb',
+    overflow: "hidden",
+    shadowColor: "#2563eb",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
   },
   submitButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 16,
     paddingHorizontal: 24,
     gap: 8,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.5,
   },
   submitButtonIcon: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   loadingContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 24,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 15,
-    color: '#64748b',
-    fontWeight: '500',
+    color: "#64748b",
+    fontWeight: "500",
   },
 });

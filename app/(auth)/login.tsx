@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,8 +12,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+
+const LOGO_IMG = require("@/assets/images/icon.png")
 
 export default function LoginScreen() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -65,6 +68,11 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.card}>
+          <Image
+          source={LOGO_IMG}
+          style={styles.logo}
+          resizeMode="contain"
+          />
           <Text style={styles.title}>Login</Text>
 
           <TextInput
@@ -130,6 +138,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     elevation: 5,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    alignSelf: 'center',
+    marginBottom: 10,
   },
   title: {
     fontSize: 28,

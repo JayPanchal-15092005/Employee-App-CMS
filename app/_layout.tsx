@@ -10,7 +10,7 @@ import * as Notifications from "expo-notifications";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useRef } from "react";
-import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 Notifications.setNotificationHandler({
@@ -50,24 +50,34 @@ function AppLayout() {
 
   // 🔔 REACTIVATE PUSH REGISTRATION
    
-   // Inside AppLayout function in app/_layout.tsx
-useEffect(() => {
-  if (!isLoaded || !isSignedIn) return;
+ useEffect(() => {
+  // 🟢 1. Safety check for production stability
+  if (!isLoaded || !isSignedIn || registerRef.current) return;
 
   const registerDevice = async () => {
     try {
+      // 🟢 2. Check for Project ID (Required for EAS builds)
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      if (!projectId) {
-        console.error("❌ No Project ID");
-        return;
-      }
+      if (!projectId) return;
 
+      // 🟢 3. Handle permissions silently
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') return;
+
+      // 🟢 4. Get the Expo Push Token
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       const expoPushToken = tokenData.data;
 
+      // 🟢 5. Get the Clerk JWT for backend auth
       const clerkToken = await getToken();
       if (!clerkToken) return;
 
+      // 🟢 6. Register with your Render Backend
       const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
         method: "POST",
         headers: {
@@ -78,15 +88,12 @@ useEffect(() => {
       });
 
       if (response.ok) {
-        // 🟢 Remove this alert after it works once
-        Alert.alert("Success", "Your device is now registered for notifications!"); 
-      } else {
-        const errorMsg = await response.text();
-        // 🔴 This will tell you exactly why Render is rejecting your phone
-        Alert.alert("Registration Failed", errorMsg); 
+        // 🟢 7. Mark as registered to prevent repeated calls
+        registerRef.current = true;
       }
     } catch (err: any) {
-      Alert.alert("Connection Error", "Phone cannot reach Render server. Check API_BASE_URL.");
+      // Sliently log error to terminal/console for debugging
+      console.error("Push registration failed:", err.message);
     }
   };
 
