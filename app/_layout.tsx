@@ -19,7 +19,7 @@ Notifications.setNotificationHandler({
       shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
-    }) as Notifications.NotificationBehavior,
+    } as Notifications.NotificationBehavior),
 });
 
 /* ================= TOKEN CACHE ================= */
@@ -49,61 +49,64 @@ function AppLayout() {
   const registerRef = useRef(false);
 
   // 🔔 REACTIVATE PUSH REGISTRATION
-   
- useEffect(() => {
-  // 🟢 1. Safety check for production stability
-  if (!isLoaded || !isSignedIn || registerRef.current) return;
-
-  const registerDevice = async () => {
-    try {
-      // 🟢 2. Check for Project ID (Required for EAS builds)
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      if (!projectId) return;
-
-      // 🟢 3. Handle permissions silently
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== 'granted') return;
-
-      // 🟢 4. Get the Expo Push Token
-      const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-      const expoPushToken = tokenData.data;
-
-      // 🟢 5. Get the Clerk JWT for backend auth
-      const clerkToken = await getToken();
-      if (!clerkToken) return;
-
-      // 🟢 6. Register with your Render Backend
-      const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${clerkToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ expoPushToken }),
-      });
-
-      if (response.ok) {
-        // 🟢 7. Mark as registered to prevent repeated calls
-        registerRef.current = true;
-      }
-    } catch (err: any) {
-      // Sliently log error to terminal/console for debugging
-      console.error("Push registration failed:", err.message);
-    }
-  };
-
-  registerDevice();
-}, [isLoaded, isSignedIn]);
 
   useEffect(() => {
-    if( !isLoaded ) return;
+    // 🟢 1. Safety check for production stability
+    if (!isLoaded || !isSignedIn || registerRef.current) return;
 
-    const isAuthGroup = segments[0] === '(auth)';
+    const registerDevice = async () => {
+      try {
+        // 🟢 2. Check for Project ID (Required for EAS builds)
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+        if (!projectId) return;
+
+        // 🟢 3. Handle permissions silently
+        const { status: existingStatus } =
+          await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== "granted") {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== "granted") return;
+
+        // 🟢 4. Get the Expo Push Token
+        const tokenData = await Notifications.getExpoPushTokenAsync({
+          projectId,
+        });
+        const expoPushToken = tokenData.data;
+
+        // 🟢 5. Get the Clerk JWT for backend auth
+        const clerkToken = await getToken();
+        if (!clerkToken) return;
+
+        // 🟢 6. Register with your Render Backend
+        const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${clerkToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ expoPushToken }),
+        });
+
+        if (response.ok) {
+          // 🟢 7. Mark as registered to prevent repeated calls
+          registerRef.current = true;
+        }
+      } catch (err: any) {
+        // Sliently log error to terminal/console for debugging
+        console.error("Push registration failed:", err.message);
+      }
+    };
+
+    registerDevice();
+  }, [isLoaded, isSignedIn]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const isAuthGroup = segments[0] === "(auth)";
 
     if (isSignedIn && isAuthGroup) {
       // 🟢 If logged in but on login/signup screen, go to form
@@ -112,8 +115,7 @@ function AppLayout() {
       // 🟢 If NOT logged in but trying to see tabs, go to login
       router.replace("/(auth)/login");
     }
-  }, [isSignedIn, isLoaded, segments])
-
+  }, [isSignedIn, isLoaded, segments]);
 
   // 🔔 NOTIFICATION TAP HANDLER
   useEffect(() => {
@@ -181,14 +183,21 @@ function AppLayout() {
 
 export default function RootLayout() {
   // 🟢 Use Constants.expoConfig as primary source for APK stability
-  const publishableKey = 
-    Constants.expoConfig?.extra?.CLERK_PUBLISHABLE_KEY || 
+  const publishableKey =
+    Constants.expoConfig?.extra?.CLERK_PUBLISHABLE_KEY ||
     process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {
     // 🟢 Don't throw a raw error; it crashes APKs. Return a simple view.
     return (
-      <View style={{ flex: 1, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "white",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         <Text>Configuration Error. Please check your Clerk Key.</Text>
       </View>
     );
@@ -198,9 +207,16 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
         <ClerkLoading>
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: '#f3f4f6' }}>
-             <ActivityIndicator size="large" color="#2563eb" /> 
-             {/* 🟢 Added indicator so user knows it's loading, not stuck on black screen */}
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "#f3f4f6",
+            }}
+          >
+            <ActivityIndicator size="large" color="#2563eb" />
+            {/* 🟢 Added indicator so user knows it's loading, not stuck on black screen */}
           </View>
         </ClerkLoading>
 

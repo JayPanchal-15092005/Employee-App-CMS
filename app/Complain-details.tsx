@@ -1,15 +1,15 @@
 import { API_BASE_URL } from "@/constants/Config";
 import { useAuth } from "@clerk/clerk-expo";
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type Complaint = {
@@ -40,23 +40,36 @@ export default function ComplaintDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDetails();
-  }, []);
+    if (id) {
+      loadDetails();
+    } else {
+      setLoading(false);
+    }
+  }, [id]);
 
   const loadDetails = async () => {
     try {
+      setLoading(true);
       const token = await getToken();
 
       const res = await fetch(`${API_BASE_URL}/api/employee/complaints/${id}`, {
         headers: {
-          Authorization: `Bearer ${token}`, 
+          Authorization: `Bearer ${token}`,
         },
       });
 
+      if(!res.ok) throw new Error("Failed to fetch");
+
       const data = await res.json();
-      setComplaint(data.complaint);
+      // setComplaint(data.complaint);
+      if (data && data.complaint) {
+        setComplaint(data.complaint)
+      } else {
+        setComplaint(null);
+      }
     } catch (err) {
       console.error("Failed to load complaint details", err);
+      setComplaint(null)
     } finally {
       setLoading(false);
     }
@@ -64,31 +77,39 @@ export default function ComplaintDetailsScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'resolved': return '#10b981';
-      case 'pending': return '#f59e0b';
-      case 'in progress': return '#3b82f6';
-      default: return '#6b7280';
+      case "resolved":
+        return "#10b981";
+      case "pending":
+        return "#f59e0b";
+      case "in progress":
+        return "#3b82f6";
+      default:
+        return "#6b7280";
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority?.toLowerCase()) {
-      case 'high': return '#ef4444';
-      case 'medium': return '#f59e0b';
-      case 'low': return '#10b981';
-      default: return '#6b7280';
+      case "high":
+        return "#ef4444";
+      case "medium":
+        return "#f59e0b";
+      case "low":
+        return "#10b981";
+      default:
+        return "#6b7280";
     }
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -106,7 +127,7 @@ export default function ComplaintDetailsScreen() {
       <View style={styles.centerContainer}>
         <Text style={styles.errorIcon}>⚠️</Text>
         <Text style={styles.errorText}>Complaint not found</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
@@ -120,10 +141,10 @@ export default function ComplaintDetailsScreen() {
     <View style={styles.wrapper}>
       {/* Gradient Header */}
       <LinearGradient
-        colors={['#3b82f6', '#2563eb', '#1d4ed8']}
+        colors={["#3b82f6", "#2563eb", "#1d4ed8"]}
         style={styles.header}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButtonHeader}
           onPress={() => router.back()}
         >
@@ -133,7 +154,7 @@ export default function ComplaintDetailsScreen() {
         <Text style={styles.headerSubtitle}>ID #{complaint.id}</Text>
       </LinearGradient>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -152,22 +173,22 @@ export default function ComplaintDetailsScreen() {
           <View style={styles.statusRow}>
             <View style={styles.statusContainer}>
               <Text style={styles.sectionLabel}>Status</Text>
-              <View 
+              <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: `${getStatusColor(complaint.status)}20` }
+                  { backgroundColor: `${getStatusColor(complaint.status)}20` },
                 ]}
               >
-                <View 
+                <View
                   style={[
                     styles.statusDot,
-                    { backgroundColor: getStatusColor(complaint.status) }
+                    { backgroundColor: getStatusColor(complaint.status) },
                   ]}
                 />
-                <Text 
+                <Text
                   style={[
                     styles.statusText,
-                    { color: getStatusColor(complaint.status) }
+                    { color: getStatusColor(complaint.status) },
                   ]}
                 >
                   {complaint.status}
@@ -177,19 +198,23 @@ export default function ComplaintDetailsScreen() {
 
             <View style={styles.priorityContainer}>
               <Text style={styles.sectionLabel}>Priority</Text>
-              <View 
+              <View
                 style={[
                   styles.priorityBadge,
-                  { backgroundColor: `${getPriorityColor(complaint.priority)}20` }
+                  {
+                    backgroundColor: `${getPriorityColor(
+                      complaint.priority
+                    )}20`,
+                  },
                 ]}
               >
-                <Text 
+                <Text
                   style={[
                     styles.priorityText,
-                    { color: getPriorityColor(complaint.priority) }
+                    { color: getPriorityColor(complaint.priority) },
                   ]}
                 >
-                  {complaint.priority || 'Medium'}
+                  {complaint.priority || "Medium"}
                 </Text>
               </View>
             </View>
@@ -205,7 +230,9 @@ export default function ComplaintDetailsScreen() {
               <Text style={styles.sectionTitle}>Complaint Details</Text>
             </View>
             <View style={styles.detailsBox}>
-              <Text style={styles.detailsText}>{complaint.complain_detail}</Text>
+              <Text style={styles.detailsText}>
+                {complaint.complain_detail}
+              </Text>
             </View>
           </View>
 
@@ -217,7 +244,9 @@ export default function ComplaintDetailsScreen() {
                 <Text style={styles.sectionTitle}>Location</Text>
               </View>
               <View style={styles.infoBox}>
-                <Text style={styles.infoText}>{complaint.complain_location}</Text>
+                <Text style={styles.infoText}>
+                  {complaint.complain_location}
+                </Text>
               </View>
             </View>
           )}
@@ -287,7 +316,7 @@ export default function ComplaintDetailsScreen() {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
   },
   header: {
     paddingHorizontal: 20,
@@ -300,20 +329,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   backButtonHeaderText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: '800',
-    color: '#ffffff',
+    fontWeight: "800",
+    color: "#ffffff",
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#dbeafe',
-    fontWeight: '500',
+    color: "#dbeafe",
+    fontWeight: "500",
   },
   scrollView: {
     flex: 1,
@@ -323,10 +352,10 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   mainCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 20,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -336,13 +365,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   departmentBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#eff6ff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#eff6ff",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   departmentIcon: {
     fontSize: 20,
@@ -350,11 +379,11 @@ const styles = StyleSheet.create({
   },
   departmentText: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#2563eb',
+    fontWeight: "700",
+    color: "#2563eb",
   },
   statusRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginBottom: 20,
   },
@@ -366,15 +395,15 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
+    fontWeight: "600",
+    color: "#64748b",
     marginBottom: 8,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,
@@ -387,29 +416,29 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   priorityBadge: {
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   priorityText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   divider: {
     height: 1,
-    backgroundColor: '#e2e8f0',
+    backgroundColor: "#e2e8f0",
     marginVertical: 20,
   },
   section: {
     marginBottom: 20,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   sectionIcon: {
@@ -418,52 +447,52 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1e293b',
+    fontWeight: "700",
+    color: "#1e293b",
   },
   detailsBox: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
     padding: 16,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
+    borderLeftColor: "#3b82f6",
   },
   detailsText: {
     fontSize: 15,
-    color: '#334155',
+    color: "#334155",
     lineHeight: 24,
   },
   infoBox: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
     padding: 14,
     borderRadius: 10,
   },
   infoText: {
     fontSize: 15,
-    color: '#475569',
+    color: "#475569",
   },
   assetsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
   },
   assetChip: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: "#f1f5f9",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: "#e2e8f0",
   },
   assetChipText: {
     fontSize: 13,
-    color: '#475569',
-    fontWeight: '500',
+    color: "#475569",
+    fontWeight: "500",
   },
   timestampContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f8fafc",
     padding: 14,
     borderRadius: 12,
   },
@@ -476,27 +505,27 @@ const styles = StyleSheet.create({
   },
   timestampLabel: {
     fontSize: 12,
-    color: '#64748b',
+    color: "#64748b",
     marginBottom: 2,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   timestampText: {
     fontSize: 14,
-    color: '#334155',
-    fontWeight: '600',
+    color: "#334155",
+    fontWeight: "600",
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#64748b',
-    fontWeight: '500',
+    color: "#64748b",
+    fontWeight: "500",
   },
   errorIcon: {
     fontSize: 64,
@@ -504,19 +533,19 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    color: '#dc2626',
-    fontWeight: '600',
+    color: "#dc2626",
+    fontWeight: "600",
     marginBottom: 24,
   },
   backButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: "#2563eb",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 10,
   },
   backButtonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
