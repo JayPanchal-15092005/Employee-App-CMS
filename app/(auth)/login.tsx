@@ -25,26 +25,37 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const onLoginPress = async () => {
+ const onLoginPress = async () => {
     if (!isLoaded || loading) return;
     try {
       setLoading(true);
+      
+      // 1. Clear any existing partial sign-ins to prevent "Session already exists" errors
       const result = await signIn.create({
         identifier: email.trim().toLowerCase(),
         password,
       });
 
+      // 2. Handle 2FA or Verification if needed
       if (result.status === "needs_first_factor") {
         router.push("/(auth)/verify");
         return;
       }
 
-      if (result.createdSessionId) {
-        await setActive({ session: result.createdSessionId });
+      // 3. FIX: Handle "complete" status or presence of createdSessionId
+      if (result.status === "complete" || result.createdSessionId) {
+        await setActive({ session: result.createdSessionId || result.createdSessionId });
+        // Use replace to clear the navigation stack
         router.replace("/(tabs)/form");
+      } else {
+        // Log status if it's something unexpected (like "needs_second_factor")
+        console.log("Unexpected login status:", result.status);
+        Alert.alert("Login Error", "Something went wrong with the session.");
       }
+
     } catch (err: any) {
-      Alert.alert("Login failed", err.message || "Network Error");
+      console.error("Login error details:", JSON.stringify(err, null, 2));
+      Alert.alert("Login failed", err.errors?.[0]?.message || "Check your email/password");
     } finally {
       setLoading(false);
     }

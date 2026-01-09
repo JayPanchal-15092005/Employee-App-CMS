@@ -2,16 +2,16 @@ import { useSignUp } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const LOGO_IMG = require("@/assets/images/icon.png");
@@ -46,8 +46,15 @@ export default function SignUpScreen() {
     if (!isLoaded) return;
     try {
       const result = await signUp.attemptEmailAddressVerification({ code });
-      await setActive({ session: result.createdSessionId });
-      router.replace("/(tabs)/form");
+      
+      // FIX: Ensure status is checked before setting active
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.replace("/(tabs)/form");
+      } else {
+        console.log("Signup status:", result.status);
+        Alert.alert("Incomplete", "Please complete all registration steps.");
+      }
     } catch (err: any) {
       Alert.alert(
         "Verification failed",

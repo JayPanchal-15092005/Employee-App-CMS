@@ -28,6 +28,7 @@ const tokenCache = {
     try {
       return await SecureStore.getItemAsync(key);
     } catch {
+      await SecureStore.deleteItemAsync(key);
       return null;
     }
   },
