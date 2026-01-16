@@ -51,59 +51,104 @@ function AppLayout() {
 
   // 🔔 REACTIVATE PUSH REGISTRATION
 
-  useEffect(() => {
-    // 🟢 1. Safety check for production stability
-    if (!isLoaded || !isSignedIn || registerRef.current) return;
+  // useEffect(() => {
+  //   // 🟢 1. Safety check for production stability
+  //   if (!isLoaded || !isSignedIn || registerRef.current) return;
 
-    const registerDevice = async () => {
-      try {
-        // 🟢 2. Check for Project ID (Required for EAS builds)
-        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-        if (!projectId) return;
+  //   const registerDevice = async () => {
+  //     try {
+  //       // 🟢 2. Check for Project ID (Required for EAS builds)
+  //       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+  //       if (!projectId) return;
 
-        // 🟢 3. Handle permissions silently
-        const { status: existingStatus } =
-          await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
-        if (existingStatus !== "granted") {
-          const { status } = await Notifications.requestPermissionsAsync();
-          finalStatus = status;
-        }
-        if (finalStatus !== "granted") return;
+  //       // 🟢 3. Handle permissions silently
+  //       const { status: existingStatus } =
+  //         await Notifications.getPermissionsAsync();
+  //       let finalStatus = existingStatus;
+  //       if (existingStatus !== "granted") {
+  //         const { status } = await Notifications.requestPermissionsAsync();
+  //         finalStatus = status;
+  //       }
+  //       if (finalStatus !== "granted") return;
 
-        // 🟢 4. Get the Expo Push Token
-        const tokenData = await Notifications.getExpoPushTokenAsync({
-          projectId,
-        });
-        const expoPushToken = tokenData.data;
+  //       // 🟢 4. Get the Expo Push Token
+  //       const tokenData = await Notifications.getExpoPushTokenAsync({
+  //         projectId,
+  //       });
+  //       const expoPushToken = tokenData.data;
 
-        // 🟢 5. Get the Clerk JWT for backend auth
-        const clerkToken = await getToken();
-        if (!clerkToken) return;
+  //       // 🟢 5. Get the Clerk JWT for backend auth
+  //       const clerkToken = await getToken();
+  //       if (!clerkToken) return;
 
-        // 🟢 6. Register with your Render Backend
-        const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${clerkToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ expoPushToken }),
-        });
+  //       // 🟢 6. Register with your Render Backend
+  //       const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
+  //         method: "POST",
+  //         headers: {
+  //           Authorization: `Bearer ${clerkToken}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({ expoPushToken }),
+  //       });
 
-        if (response.ok) {
-          // 🟢 7. Mark as registered to prevent repeated calls
-          registerRef.current = true;
-        }
-      } catch (err: any) {
-        // Sliently log error to terminal/console for debugging
-        console.error("Push registration failed:", err.message);
+  //       if (response.ok) {
+  //         // 🟢 7. Mark as registered to prevent repeated calls
+  //         registerRef.current = true;
+  //       }
+  //     } catch (err: any) {
+  //       // Sliently log error to terminal/console for debugging
+  //       console.error("Push registration failed:", err.message);
+  //     }
+  //   };
+
+  //   registerDevice();
+  // }, [isLoaded, isSignedIn]);
+
+
+  // Inside Employee App AppLayout component
+useEffect(() => {
+  if (!isLoaded || !isSignedIn) return;
+
+  const registerDevice = async () => {
+    try {
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      if (!projectId) return;
+
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") return;
+
+      const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+      const expoPushToken = tokenData.data;
+
+      const clerkToken = await getToken();
+      if (!clerkToken) return;
+
+      // FIX: Log this to see if it's hitting your backend
+      console.log("📤 Registering Employee Token:", expoPushToken);
+
+      const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${clerkToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ expoPushToken }),
+      });
+
+      if (response.ok) {
+        console.log("✅ Employee device registered");
+        registerRef.current = true; 
+      } else {
+        const errorText = await response.text();
+        console.error("❌ Registration failed:", errorText);
       }
-    };
+    } catch (err: any) {
+      console.error("Push registration error:", err.message);
+    }
+  };
 
-    registerDevice();
-  }, [isLoaded, isSignedIn]);
-
+  registerDevice();
+}, [isLoaded, isSignedIn]); // Re-run if login state changes
   useEffect(() => {
     if (!isLoaded) return;
 
