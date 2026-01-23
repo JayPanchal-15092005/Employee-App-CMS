@@ -109,7 +109,7 @@ export default function ComplaintScreen() {
       if (!token) {
         Alert.alert(
           "Session Expired",
-          "Your session expired. Please sign in again."
+          "Your session expired. Please sign in again.",
         );
         router.replace("/(auth)/login");
         return;
@@ -169,8 +169,8 @@ export default function ComplaintScreen() {
               source={LOGO_IMG}
               style={styles.headerLogo}
               resizeMode="contain"
-             />
-             <Text style={styles.headerTitle}>CMS FORM</Text>
+            />
+            <Text style={styles.headerTitle}>CMS FORM</Text>
           </View>
           <TouchableOpacity
             style={styles.signOutButton}
@@ -303,7 +303,7 @@ export default function ComplaintScreen() {
                 >
                   <Picker.Item label="Select person..." value="" />
                   <Picker.Item label="Bhargav Suthar" value="IT Support" />
-                  <Picker.Item label="Jay Panchal" value="Hardware Team" />
+                  {/* <Picker.Item label="Jay Panchal" value="Hardware Team" /> */}
                 </Picker>
               </View>
             </View>
@@ -404,15 +404,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   headerLogo: {
     width: 32,
     height: 32,
     borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Light backing for visibility
+    backgroundColor: "rgba(255, 255, 255, 0.2)", // Light backing for visibility
   },
   headerTitle: {
     fontSize: 21,
