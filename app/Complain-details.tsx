@@ -601,6 +601,34 @@ export default function ComplaintDetailsScreen() {
     }
   }, [id]);
 
+  // const loadDetails = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const token = await getToken();
+
+  //     const res = await fetch(`${API_BASE_URL}/api/employee/complaints/${id}`, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+
+  //     if (!res.ok) throw new Error("Failed to fetch");
+
+  //     const data = await res.json();
+
+  //     if (data && data.complaint) {
+  //       setComplaint(data.complaint);
+  //     } else {
+  //       setComplaint(null);
+  //     }
+  //   } catch (err) {
+  //     console.error("Failed to load complaint details", err);
+  //     setComplaint(null);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const loadDetails = async () => {
     try {
       setLoading(true);
@@ -615,7 +643,7 @@ export default function ComplaintDetailsScreen() {
       if (!res.ok) throw new Error("Failed to fetch");
 
       const data = await res.json();
-
+      setComplaint(data.complaint);
       if (data && data.complaint) {
         setComplaint(data.complaint);
       } else {
