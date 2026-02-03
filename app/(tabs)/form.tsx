@@ -137,7 +137,7 @@ export default function ComplaintScreen() {
         throw new Error(data.error || `Server error ${res.status}`);
       }
 
-      Alert.alert("Success", "Complaint submitted successfully");
+      Alert.alert("Success", "Your Complaint Submitted.");
 
       setName("");
       setEmail("");
@@ -206,14 +206,14 @@ export default function ComplaintScreen() {
             </View>
 
             <TextInputField
-              label="Full Name"
+              label="Full Name *"
               value={name}
               onChangeText={(text) => setName(text)}
               placeholder="Enter your name"
             />
 
             <TextInputField
-              label="Email"
+              label="Email *"
               value={email}
               onChangeText={setEmail}
               placeholder="you@gmail.com"
@@ -238,7 +238,7 @@ export default function ComplaintScreen() {
             {/* Assets Selection */}
             <View style={styles.section}>
               <Text style={styles.label}>
-                <Text style={styles.labelIcon}>🔧</Text> Assets (select any)
+                <Text style={styles.labelIcon}>🔧</Text> Assets (select any) *
               </Text>
               <View style={styles.assetsContainer}>
                 <ScrollView
@@ -276,10 +276,10 @@ export default function ComplaintScreen() {
             />
 
             <TextInputField
-              label="Location"
+              label="Location *"
               value={location}
               onChangeText={setLocation}
-              placeholder="Building / Floor / Desk number"
+              placeholder="Cubical Number / Desk number"
             />
 
             {/* Assignment Section */}
@@ -310,7 +310,7 @@ export default function ComplaintScreen() {
 
             <View style={styles.section}>
               <Text style={styles.label}>
-                <Text style={styles.labelIcon}>⚡</Text> Priority Level
+                <Text style={styles.labelIcon}></Text> Priority Level
               </Text>
               <View style={styles.priorityContainer}>
                 {["Low", "Medium", "High"].map((level) => (
