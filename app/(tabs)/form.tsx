@@ -31,12 +31,15 @@ const ASSETS = [
   "Monitor",
   "Mouse",
   "Laptop",
-  "WiFi",
+  "Internet / WiFi",
   "Cartridge Toner",
   "Extension Board",
   "Telephone Extension",
   "Wave Issue",
   "Mobile Phone",
+  "Elecctric",
+  "Printer",
+  "IPD",
   "Other Complaint",
 ];
 
@@ -232,7 +235,7 @@ export default function ComplaintScreen() {
               label="Department *"
               value={department}
               onChangeText={setDepartment}
-              placeholder="e.g. IT, HR"
+              placeholder="e.g. IT, HR, BOBFI, SBIFI"
             />
 
             {/* Assets Selection */}
@@ -279,7 +282,7 @@ export default function ComplaintScreen() {
               label="Location *"
               value={location}
               onChangeText={setLocation}
-              placeholder="Cubical Number / Desk number"
+              placeholder="Cubical / Cabin / Desk number"
             />
 
             {/* Assignment Section */}
@@ -302,7 +305,7 @@ export default function ComplaintScreen() {
                   dropdownIconColor="#0f172a"
                 >
                   <Picker.Item label="Select person..." value="" />
-                  <Picker.Item label="Bhargav Suthar" value="IT Support" />
+                  <Picker.Item label="Bhargav Suthar" value="Bhargav Suthar" />
                   {/* <Picker.Item label="Jay Panchal" value="Hardware Team" /> */}
                 </Picker>
               </View>

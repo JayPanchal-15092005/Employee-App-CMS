@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "employeeapp",
-    "slug": "employeeapp",
+    "name": "cms",
+    "slug": "cms",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -42,7 +42,8 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

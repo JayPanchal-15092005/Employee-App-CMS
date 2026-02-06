@@ -19,23 +19,48 @@ Notifications.setNotificationHandler({
       shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
-    } as Notifications.NotificationBehavior),
+    }) as Notifications.NotificationBehavior,
 });
 
 /* ================= TOKEN CACHE ================= */
+// const tokenCache = {
+//   async getToken(key: string) {
+//     try {
+//       return await SecureStore.getItemAsync(key);
+//     } catch {
+//       await SecureStore.deleteItemAsync(key);
+//       return null;
+//     }
+//   },
+//   async saveToken(key: string, value: string) {
+//     try {
+//       return await SecureStore.setItemAsync(key, value);
+//     } catch {
+//       return;
+//     }
+//   },
+// };
+
 const tokenCache = {
   async getToken(key: string) {
     try {
-      return await SecureStore.getItemAsync(key);
-    } catch {
+      const item = await SecureStore.getItemAsync(key);
+      if (item) {
+        console.log(`${key} was used 🔐 \n`);
+      } else {
+        console.log("No values stored under key: " + key);
+      }
+      return item;
+    } catch (error) {
+      console.error("SecureStore get item error: ", error);
       await SecureStore.deleteItemAsync(key);
       return null;
     }
   },
   async saveToken(key: string, value: string) {
     try {
-      return await SecureStore.setItemAsync(key, value);
-    } catch {
+      return SecureStore.setItemAsync(key, value);
+    } catch (err) {
       return;
     }
   },
@@ -104,51 +129,52 @@ function AppLayout() {
   //   registerDevice();
   // }, [isLoaded, isSignedIn]);
 
-
   // Inside Employee App AppLayout component
-useEffect(() => {
-  if (!isLoaded || !isSignedIn) return;
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
 
-  const registerDevice = async () => {
-    try {
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      if (!projectId) return;
+    const registerDevice = async () => {
+      try {
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+        if (!projectId) return;
 
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== "granted") return;
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== "granted") return;
 
-      const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-      const expoPushToken = tokenData.data;
+        const tokenData = await Notifications.getExpoPushTokenAsync({
+          projectId,
+        });
+        const expoPushToken = tokenData.data;
 
-      const clerkToken = await getToken();
-      if (!clerkToken) return;
+        const clerkToken = await getToken();
+        if (!clerkToken) return;
 
-      // FIX: Log this to see if it's hitting your backend
-      console.log("📤 Registering Employee Token:", expoPushToken);
+        // FIX: Log this to see if it's hitting your backend
+        console.log("📤 Registering Employee Token:", expoPushToken);
 
-      const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${clerkToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ expoPushToken }),
-      });
+        const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${clerkToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ expoPushToken }),
+        });
 
-      if (response.ok) {
-        console.log("✅ Employee device registered");
-        registerRef.current = true; 
-      } else {
-        const errorText = await response.text();
-        console.error("❌ Registration failed:", errorText);
+        if (response.ok) {
+          console.log("✅ Employee device registered");
+          registerRef.current = true;
+        } else {
+          const errorText = await response.text();
+          console.error("❌ Registration failed:", errorText);
+        }
+      } catch (err: any) {
+        console.error("Push registration error:", err.message);
       }
-    } catch (err: any) {
-      console.error("Push registration error:", err.message);
-    }
-  };
+    };
 
-  registerDevice();
-}, [isLoaded, isSignedIn]); // Re-run if login state changes
+    registerDevice();
+  }, [isLoaded, isSignedIn]); // Re-run if login state changes
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -179,7 +205,7 @@ useEffect(() => {
         if (data?.screen === "history") {
           router.push("/(tabs)/history");
         }
-      }
+      },
     );
     return () => sub.remove();
   }, []);
