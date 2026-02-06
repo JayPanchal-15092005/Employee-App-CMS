@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "cms",
-    "slug": "cms",
+    "name": "CMS",
+    "slug": "employeeapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
