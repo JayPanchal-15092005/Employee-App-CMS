@@ -239,13 +239,180 @@
 //   },
 // });
 
-import { useOAuth } from "@clerk/clerk-expo";
+// import { useSSO } from "@clerk/clerk-expo";
+// import * as Linking from "expo-linking";
+// import { useRouter } from "expo-router";
+// import * as WebBrowser from "expo-web-browser";
+// import React from "react";
+// import {
+//   ActivityIndicator,
+//   Image,
+//   StyleSheet,
+//   Text,
+//   TouchableOpacity,
+//   View,
+// } from "react-native";
+
+// // This helps the browser close correctly after login on Android
+// export const useWarmUpBrowser = () => {
+//   React.useEffect(() => {
+//     void WebBrowser.warmUpAsync();
+//     return () => {
+//       void WebBrowser.coolDownAsync();
+//     };
+//   }, []);
+// };
+
+// WebBrowser.maybeCompleteAuthSession();
+
+// const LOGO_IMG = require("@/assets/images/icon.png"); // Make sure this path is correct
+// const GOOGLE_ICON = "https://img.icons8.com/color/48/000000/google-logo.png"; // External Google icon
+
+// export default function LoginScreen() {
+//   useWarmUpBrowser();
+//   const router = useRouter();
+
+//   // 1. Setup OAuth Strategy
+//   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
+//   const [loading, setLoading] = React.useState(false);
+
+//   const onGoogleSignIn = async () => {
+//     try {
+//       setLoading(true);
+
+//       // 2. Start the flow
+//       const { createdSessionId, setActive, signUp } = await startOAuthFlow({
+//         redirectUrl: Linking.createURL("/(tabs)/form", {
+//           scheme: "cmsemployee",
+//         }), // Match your app.json scheme
+//       });
+
+//       // 3. If login successful, set active session
+//       if (createdSessionId) {
+//         if (setActive) {
+//           await setActive({ session: createdSessionId });
+//           router.replace("/(tabs)/form");
+//         }
+//       } else {
+//         // Use signIn or signUp for next steps such as MFA
+//       }
+//     } catch (err) {
+//       console.error("OAuth error", err);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <View style={styles.card}>
+//         {/* Logo Section */}
+//         <Image source={LOGO_IMG} style={styles.logo} resizeMode="contain" />
+//         <Text style={styles.title}>Welcome Back</Text>
+//         <Text style={styles.subtitle}>Sign in to access the CMS Portal</Text>
+
+//         {/* Google Button */}
+//         <TouchableOpacity
+//           style={styles.googleButton}
+//           onPress={onGoogleSignIn}
+//           disabled={loading}
+//         >
+//           {loading ? (
+//             <ActivityIndicator color="#000" />
+//           ) : (
+//             <>
+//               <Image source={{ uri: GOOGLE_ICON }} style={styles.googleIcon} />
+//               <Text style={styles.googleText}>Continue with Google</Text>
+//             </>
+//           )}
+//         </TouchableOpacity>
+
+//         <Text style={styles.footerText}>
+//           By continuing, you agree to our Terms & Conditions.
+//         </Text>
+//       </View>
+//     </View>
+//   );
+// }
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: "#f3f4f6",
+//     justifyContent: "center",
+//     padding: 24,
+//   },
+//   card: {
+//     backgroundColor: "#fff",
+//     borderRadius: 24,
+//     padding: 30,
+//     alignItems: "center",
+//     elevation: 8, // Shadow for Android
+//     shadowColor: "#000", // Shadow for iOS
+//     shadowOffset: { width: 0, height: 4 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 12,
+//   },
+//   logo: {
+//     width: 90,
+//     height: 90,
+//     marginBottom: 20,
+//   },
+//   title: {
+//     fontSize: 26,
+//     fontWeight: "800",
+//     color: "#1f2937",
+//     marginBottom: 8,
+//   },
+//   subtitle: {
+//     fontSize: 16,
+//     color: "#6b7280",
+//     marginBottom: 32,
+//     textAlign: "center",
+//   },
+//   googleButton: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     justifyContent: "center",
+//     backgroundColor: "#ffffff",
+//     borderWidth: 1,
+//     borderColor: "#e5e7eb",
+//     paddingVertical: 16,
+//     paddingHorizontal: 24,
+//     borderRadius: 16,
+//     width: "100%",
+//     marginBottom: 24,
+//     elevation: 2,
+//     shadowColor: "#000",
+//     shadowOffset: { width: 0, height: 2 },
+//     shadowOpacity: 0.05,
+//     shadowRadius: 4,
+//   },
+//   googleIcon: {
+//     width: 24,
+//     height: 24,
+//     marginRight: 12,
+//   },
+//   googleText: {
+//     fontSize: 16,
+//     fontWeight: "600",
+//     color: "#374151",
+//   },
+//   footerText: {
+//     fontSize: 12,
+//     color: "#9ca3af",
+//     textAlign: "center",
+//   },
+// });
+
+import { useSSO } from "@clerk/clerk-expo"; // 🟢 CHANGED: Import useSSO
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   StyleSheet,
   Text,
@@ -253,7 +420,7 @@ import {
   View,
 } from "react-native";
 
-// This helps the browser close correctly after login on Android
+// 1. Browser Warm-up (Required for Android)
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
     void WebBrowser.warmUpAsync();
@@ -265,39 +432,49 @@ export const useWarmUpBrowser = () => {
 
 WebBrowser.maybeCompleteAuthSession();
 
-const LOGO_IMG = require("@/assets/images/icon.png"); // Make sure this path is correct
-const GOOGLE_ICON = "https://img.icons8.com/color/48/000000/google-logo.png"; // External Google icon
+const LOGO_IMG = require("@/assets/images/icon.png");
+const GOOGLE_ICON = "https://img.icons8.com/color/48/000000/google-logo.png";
 
 export default function LoginScreen() {
   useWarmUpBrowser();
   const router = useRouter();
 
-  // 1. Setup OAuth Strategy
-  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
+  // 🟢 2. CHANGED: Initialize the hook without arguments
+  const { startSSOFlow } = useSSO();
   const [loading, setLoading] = React.useState(false);
 
   const onGoogleSignIn = async () => {
     try {
       setLoading(true);
 
-      // 2. Start the flow
-      const { createdSessionId, setActive, signUp } = await startOAuthFlow({
-        redirectUrl: Linking.createURL("/(tabs)/form", {
-          scheme: "cmsemployee",
-        }), // Match your app.json scheme
-      });
+      // 🟢 3. CHANGED: Pass 'strategy' and 'redirectUrl' here
+      const { createdSessionId, setActive, signIn, signUp } =
+        await startSSOFlow({
+          strategy: "oauth_google",
+          // Ensure 'cmsemployee' matches the scheme in your app.json
+          redirectUrl: Linking.createURL("/(tabs)/form", {
+            scheme: "cmsemployee",
+          }),
+        });
 
-      // 3. If login successful, set active session
+      // 4. Handle the result
       if (createdSessionId) {
         if (setActive) {
           await setActive({ session: createdSessionId });
+          console.log("✅ OAuth Login Successful!");
           router.replace("/(tabs)/form");
         }
       } else {
-        // Use signIn or signUp for next steps such as MFA
+        // This handles cases where MFA might be required
+        console.log("Session created but not active:", signIn || signUp);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("OAuth error", err);
+      // Helpful error alert for debugging
+      Alert.alert(
+        "Login Failed",
+        err.errors?.[0]?.message || "Something went wrong",
+      );
     } finally {
       setLoading(false);
     }
@@ -306,12 +483,10 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        {/* Logo Section */}
         <Image source={LOGO_IMG} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to access the CMS Portal</Text>
 
-        {/* Google Button */}
         <TouchableOpacity
           style={styles.googleButton}
           onPress={onGoogleSignIn}
@@ -347,8 +522,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 30,
     alignItems: "center",
-    elevation: 8, // Shadow for Android
-    shadowColor: "#000", // Shadow for iOS
+    elevation: 8,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -383,10 +558,6 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 24,
     elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
   },
   googleIcon: {
     width: 24,
