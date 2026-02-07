@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "122080548968",
-    "project_id": "employee-app-28abd",
-    "storage_bucket": "employee-app-28abd.firebasestorage.app"
+    "project_number": "43034011438",
+    "project_id": "admin-app-9f3f2",
+    "storage_bucket": "admin-app-9f3f2.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:122080548968:android:1f7a1ae38778811b8383dd",
+        "mobilesdk_app_id": "1:43034011438:android:fd7e3a9d34d06e2cb4bcbf",
         "android_client_info": {
-          "package_name": "com.jay_panchal.employeeapp"
+          "package_name": "com.ketan_panchal.adminapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "43034011438-ltvscq2s4rc0r2np7sgi8khcblh0abvb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ketan_panchal.adminapp",
+            "certificate_hash": "14a2b4daf04763621c6e3eef187228f926412a35"
+          }
+        },
+        {
+          "client_id": "43034011438-6m6g6amd1krbq84ncck1q6pqoup2oao9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDD1bJvdLCcF-LRZGi2V3M_eC3mi6UhUZ0"
+          "current_key": "AIzaSyAmOWMavfeaakPcOWHzUVVXQNzCYHYCmq4"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "43034011438-6m6g6amd1krbq84ncck1q6pqoup2oao9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

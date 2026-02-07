@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "@/constants/Config";
-import { useAuth } from "@clerk/clerk-expo";
+import auth from "@react-native-firebase/auth"; // 🟢 CHANGED: Import Firebase
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -21,7 +21,7 @@ type Complaint = {
 };
 
 export default function HistoryScreen() {
-  const { getToken } = useAuth();
+  // 🟢 REMOVED: const { getToken } = useAuth();
   const router = useRouter();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,10 +33,20 @@ export default function HistoryScreen() {
 
   const loadHistory = async () => {
     try {
-      const token = await getToken();
+      // 🟢 UPDATED: Get Token from Firebase
+      const user = auth().currentUser;
+
+      if (!user) {
+        console.log("No user logged in");
+        setLoading(false);
+        return;
+      }
+
+      const token = await user.getIdToken();
+
       const res = await fetch(`${API_BASE_URL}/api/employee/complaints`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // 🟢 Send Firebase Token
         },
       });
 
@@ -72,7 +82,6 @@ export default function HistoryScreen() {
         contentContainerStyle={styles.container}
         data={complaints}
         keyExtractor={(item) => item.id.toString()}
-        // 🟢 This makes "Pull to Refresh" work
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -80,7 +89,6 @@ export default function HistoryScreen() {
             colors={["#2563eb"]}
           />
         }
-        // 🟢 This allows refreshing even when the list is empty
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No complaints found</Text>

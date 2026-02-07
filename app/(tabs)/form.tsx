@@ -1,5 +1,393 @@
 // app/(tabs)/form.tsx - Beautiful Modern Design
-import { useAuth } from "@clerk/clerk-expo";
+// import { useAuth } from "@clerk/clerk-expo";
+// import { Picker } from "@react-native-picker/picker";
+// import { LinearGradient } from "expo-linear-gradient";
+// import { useRouter } from "expo-router";
+// import React, { useState } from "react";
+// import {
+//   ActivityIndicator,
+//   Alert,
+//   Image,
+//   KeyboardAvoidingView,
+//   Platform,
+//   ScrollView,
+//   StyleSheet,
+//   Text,
+//   TouchableOpacity,
+//   View,
+// } from "react-native";
+// import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// import AssetCheckbox from "@/components/AssetCheckBox";
+// import TextInputField from "@/components/TextInputField";
+// import { API_BASE_URL } from "@/constants/Config";
+
+// const ASSETS = [
+//   "Software",
+//   "CCTV",
+//   "Keyboard",
+//   "Desktop",
+//   "WebCAM",
+//   "Monitor",
+//   "Mouse",
+//   "Laptop",
+//   "Internet / WiFi",
+//   "Cartridge Toner",
+//   "Extension Board",
+//   "Telephone Extension",
+//   "Wave Issue",
+//   "Mobile Phone",
+//   "Elecctric",
+//   "Printer",
+//   "IPD",
+//   "Other Complaint",
+// ];
+
+// const LOGO_IMG = require("@/assets/images/icon.png");
+
+// export default function ComplaintScreen() {
+//   const insets = useSafeAreaInsets();
+//   const router = useRouter();
+//   const { getToken, isSignedIn, signOut, isLoaded } = useAuth();
+
+//   const [name, setName] = useState("");
+//   const [email, setEmail] = useState("");
+//   const [department, setDepartment] = useState("");
+//   const [selected, setSelected] = useState<Record<string, boolean>>({});
+//   const [detail, setDetail] = useState("");
+//   const [location, setLocation] = useState("");
+//   const [toWhom, setToWhom] = useState("");
+//   const [priority, setPriority] = useState("");
+//   const [loading, setLoading] = useState(false);
+
+//   const toggleAsset = (label: string) =>
+//     setSelected((prev) => ({ ...prev, [label]: !prev[label] }));
+
+//   const handleSignOut = async () => {
+//     try {
+//       await signOut();
+//       router.replace("/(auth)/login");
+//     } catch (err) {
+//       console.error("Sign out error", err);
+//       Alert.alert("Error", "Failed to sign out");
+//     }
+//   };
+
+//   const handleSubmit = async () => {
+//     if (!isLoaded) {
+//       Alert.alert("Please wait", "Authentication is still loading");
+//       return;
+//     }
+
+//     if (!department.trim()) {
+//       return Alert.alert("Validation", "Department is required field");
+//     }
+//     if (!detail.trim()) {
+//       return Alert.alert("Validation", "Complaint Detail is required field");
+//     }
+//     if (!name.trim()) {
+//       return Alert.alert("Validation", "Name is required field field");
+//     }
+//     if (!email.trim()) {
+//       return Alert.alert("Validation", "Email is required field");
+//     }
+
+//     const assets = Object.keys(selected).filter((k) => selected[k]);
+//     const payload = {
+//       submitter_name: name.trim() || null,
+//       submitter_email: email.trim() || null,
+//       department,
+//       assets,
+//       complain_detail: detail,
+//       complain_location: location || null,
+//       to_whom: toWhom || null,
+//       priority: priority || "Medium",
+//     };
+
+//     try {
+//       setLoading(true);
+
+//       const token = await getToken({ template: "backend" });
+
+//       if (!token) {
+//         Alert.alert(
+//           "Session Expired",
+//           "Your session expired. Please sign in again.",
+//         );
+//         router.replace("/(auth)/login");
+//         return;
+//       }
+
+//       await fetch(`${API_BASE_URL}/api/debug-auth`, {
+//         method: "POST",
+//         headers: {
+//           Authorization: `Bearer ${await getToken()}`,
+//         },
+//       });
+
+//       const res = await fetch(`${API_BASE_URL}/api/complaints`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify(payload),
+//       });
+
+//       const data = await res.json().catch(() => ({}));
+
+//       if (!res.ok) {
+//         throw new Error(data.error || `Server error ${res.status}`);
+//       }
+
+//       Alert.alert("Success", "Your Complaint Submitted.");
+
+//       setName("");
+//       setEmail("");
+//       setDepartment("");
+//       setSelected({});
+//       setDetail("");
+//       setLocation("");
+//       setToWhom("");
+//       setPriority("");
+//     } catch (err: any) {
+//       console.error("Submit error", err);
+//       Alert.alert("Submit Failed", err.message || "Unknown error");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <View style={styles.wrapper}>
+//       {/* Gradient Header */}
+//       <LinearGradient
+//         colors={["#3b82f6", "#2563eb", "#1d4ed8"]}
+//         style={[styles.header, { paddingTop: insets.top + 10 }]}
+//       >
+//         <View style={styles.headerContent}>
+//           {/* 🟢 Logo and Title Container */}
+//           <View style={styles.titleContainer}>
+//             <Image
+//               source={LOGO_IMG}
+//               style={styles.headerLogo}
+//               resizeMode="contain"
+//             />
+//             <Text style={styles.headerTitle}>CMS FORM</Text>
+//           </View>
+//           <TouchableOpacity
+//             style={styles.signOutButton}
+//             onPress={handleSignOut}
+//             activeOpacity={0.8}
+//           >
+//             <Text style={styles.signOutText}>Sign Out</Text>
+//           </TouchableOpacity>
+//         </View>
+//       </LinearGradient>
+
+//       <KeyboardAvoidingView
+//         style={styles.keyboardView}
+//         behavior={Platform.OS === "ios" ? "padding" : "height"}
+//         keyboardVerticalOffset={Platform.select({ ios: 0, android: 60 })}
+//       >
+//         <ScrollView
+//           contentContainerStyle={[
+//             styles.scrollContent,
+//             { paddingBottom: 32 + insets.bottom },
+//           ]}
+//           keyboardShouldPersistTaps="handled"
+//           showsVerticalScrollIndicator={false}
+//         >
+//           {/* Form Card */}
+//           <View style={styles.formCard}>
+//             {/* Personal Info Section */}
+//             <View style={styles.sectionHeader}>
+//               <View style={styles.sectionIconContainer}>
+//                 <Text style={styles.sectionIcon}>👤</Text>
+//               </View>
+//               <Text style={styles.sectionHeaderText}>Personal Information</Text>
+//             </View>
+
+//             <TextInputField
+//               label="Full Name *"
+//               value={name}
+//               onChangeText={(text) => setName(text)}
+//               placeholder="Enter your name"
+//             />
+
+//             <TextInputField
+//               label="Email *"
+//               value={email}
+//               onChangeText={setEmail}
+//               placeholder="you@gmail.com"
+//               keyboardType="email-address"
+//             />
+
+//             {/* Complaint Details Section */}
+//             <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+//               <View style={styles.sectionIconContainer}>
+//                 <Text style={styles.sectionIcon}>📝</Text>
+//               </View>
+//               <Text style={styles.sectionHeaderText}>Complaint Details</Text>
+//             </View>
+
+//             <TextInputField
+//               label="Department *"
+//               value={department}
+//               onChangeText={setDepartment}
+//               placeholder="e.g. IT, HR, BOBFI, SBIFI"
+//             />
+
+//             {/* Assets Selection */}
+//             <View style={styles.section}>
+//               <Text style={styles.label}>
+//                 <Text style={styles.labelIcon}>🔧</Text> Assets (select any) *
+//               </Text>
+//               <View style={styles.assetsContainer}>
+//                 <ScrollView
+//                   style={styles.assetsScroll}
+//                   showsVerticalScrollIndicator={true}
+//                   nestedScrollEnabled={true}
+//                 >
+//                   {ASSETS.map((asset, index) => (
+//                     <View
+//                       key={asset}
+//                       style={[
+//                         styles.assetItemWrapper,
+//                         index !== ASSETS.length - 1 && styles.assetItemBorder,
+//                       ]}
+//                     >
+//                       <AssetCheckbox
+//                         label={asset}
+//                         value={!!selected[asset]}
+//                         onChange={() => toggleAsset(asset)}
+//                       />
+//                     </View>
+//                   ))}
+//                 </ScrollView>
+//               </View>
+//             </View>
+
+//             <TextInputField
+//               label="Complaint Detail *"
+//               value={detail}
+//               onChangeText={setDetail}
+//               placeholder="Describe the issue in detail..."
+//               multiline
+//               numberOfLines={5}
+//               style={{ height: 100 }}
+//             />
+
+//             <TextInputField
+//               label="Location *"
+//               value={location}
+//               onChangeText={setLocation}
+//               placeholder="Cubical / Cabin / Desk number"
+//             />
+
+//             {/* Assignment Section */}
+//             <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+//               <View style={styles.sectionIconContainer}>
+//                 <Text style={styles.sectionIcon}>⚙️</Text>
+//               </View>
+//               <Text style={styles.sectionHeaderText}>Assignment</Text>
+//             </View>
+
+//             <View style={styles.section}>
+//               <Text style={styles.label}>
+//                 <Text style={styles.labelIcon}>👷</Text> Assign To
+//               </Text>
+//               <View style={styles.pickerContainer}>
+//                 <Picker
+//                   selectedValue={toWhom}
+//                   onValueChange={setToWhom}
+//                   style={[styles.picker, { color: "#0f172a" }]}
+//                   dropdownIconColor="#0f172a"
+//                 >
+//                   <Picker.Item label="Select person..." value="" />
+//                   <Picker.Item label="Bhargav Suthar" value="Bhargav Suthar" />
+//                   {/* <Picker.Item label="Jay Panchal" value="Hardware Team" /> */}
+//                 </Picker>
+//               </View>
+//             </View>
+
+//             <View style={styles.section}>
+//               <Text style={styles.label}>
+//                 <Text style={styles.labelIcon}></Text> Priority Level
+//               </Text>
+//               <View style={styles.priorityContainer}>
+//                 {["Low", "Medium", "High"].map((level) => (
+//                   <TouchableOpacity
+//                     key={level}
+//                     style={[
+//                       styles.priorityChip,
+//                       priority === level && styles.priorityChipActive,
+//                       priority === level &&
+//                         level === "Low" &&
+//                         styles.priorityLow,
+//                       priority === level &&
+//                         level === "Medium" &&
+//                         styles.priorityMedium,
+//                       priority === level &&
+//                         level === "High" &&
+//                         styles.priorityHigh,
+//                     ]}
+//                     onPress={() => setPriority(level)}
+//                     activeOpacity={0.7}
+//                   >
+//                     <Text
+//                       style={[
+//                         styles.priorityChipText,
+//                         priority === level && styles.priorityChipTextActive,
+//                       ]}
+//                     >
+//                       {level}
+//                     </Text>
+//                   </TouchableOpacity>
+//                 ))}
+//               </View>
+//             </View>
+
+//             {/* Submit Button */}
+//             <View style={styles.submitSection}>
+//               {loading ? (
+//                 <View style={styles.loadingContainer}>
+//                   <ActivityIndicator size="large" color="#2563eb" />
+//                   <Text style={styles.loadingText}>
+//                     Submitting your complaint...
+//                   </Text>
+//                 </View>
+//               ) : (
+//                 <TouchableOpacity
+//                   style={styles.submitButton}
+//                   onPress={handleSubmit}
+//                   disabled={loading}
+//                   activeOpacity={0.9}
+//                 >
+//                   <LinearGradient
+//                     colors={["#3b82f6", "#2563eb"]}
+//                     style={styles.submitButtonGradient}
+//                     start={{ x: 0, y: 0 }}
+//                     end={{ x: 1, y: 0 }}
+//                   >
+//                     <Text style={styles.submitButtonText}>
+//                       Submit Complaint
+//                     </Text>
+//                     <Text style={styles.submitButtonIcon}>→</Text>
+//                   </LinearGradient>
+//                 </TouchableOpacity>
+//               )}
+//             </View>
+//           </View>
+//         </ScrollView>
+//       </KeyboardAvoidingView>
+//     </View>
+//   );
+// }
+
+// app/(tabs)/form.tsx
+// 🟢 1. Change Import: Remove Clerk, Add Firebase
+import auth from "@react-native-firebase/auth";
 import { Picker } from "@react-native-picker/picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -48,7 +436,8 @@ const LOGO_IMG = require("@/assets/images/icon.png");
 export default function ComplaintScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { getToken, isSignedIn, signOut, isLoaded } = useAuth();
+
+  // 🟢 REMOVED: const { getToken, isSignedIn, signOut, isLoaded } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -65,7 +454,8 @@ export default function ComplaintScreen() {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      // 🟢 UPDATED: Sign out using Firebase
+      await auth().signOut();
       router.replace("/(auth)/login");
     } catch (err) {
       console.error("Sign out error", err);
@@ -74,23 +464,20 @@ export default function ComplaintScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!isLoaded) {
-      Alert.alert("Please wait", "Authentication is still loading");
+    // 🟢 UPDATED: Check Firebase Auth State
+    const currentUser = auth().currentUser;
+    if (!currentUser) {
+      Alert.alert("Please wait", "You are not logged in.");
+      router.replace("/(auth)/login");
       return;
     }
 
-    if (!department.trim()) {
-      return Alert.alert("Validation", "Department is required field");
-    }
-    if (!detail.trim()) {
-      return Alert.alert("Validation", "Complaint Detail is required field");
-    }
-    if (!name.trim()) {
-      return Alert.alert("Validation", "Name is required field field");
-    }
-    if (!email.trim()) {
-      return Alert.alert("Validation", "Email is required field");
-    }
+    if (!department.trim())
+      return Alert.alert("Validation", "Department is required");
+    if (!detail.trim())
+      return Alert.alert("Validation", "Complaint Detail is required");
+    if (!name.trim()) return Alert.alert("Validation", "Name is required");
+    if (!email.trim()) return Alert.alert("Validation", "Email is required");
 
     const assets = Object.keys(selected).filter((k) => selected[k]);
     const payload = {
@@ -107,28 +494,20 @@ export default function ComplaintScreen() {
     try {
       setLoading(true);
 
-      const token = await getToken({ template: "backend" });
+      // 🟢 UPDATED: Get Token from Firebase
+      const token = await currentUser.getIdToken();
 
       if (!token) {
-        Alert.alert(
-          "Session Expired",
-          "Your session expired. Please sign in again.",
-        );
+        Alert.alert("Session Expired", "Please sign in again.");
         router.replace("/(auth)/login");
         return;
       }
-
-      await fetch(`${API_BASE_URL}/api/debug-auth`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${await getToken()}`,
-        },
-      });
 
       const res = await fetch(`${API_BASE_URL}/api/complaints`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          // 🟢 Token is now the Firebase Token
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
@@ -142,6 +521,7 @@ export default function ComplaintScreen() {
 
       Alert.alert("Success", "Your Complaint Submitted.");
 
+      // Reset Form
       setName("");
       setEmail("");
       setDepartment("");
@@ -159,14 +539,13 @@ export default function ComplaintScreen() {
   };
 
   return (
+    // ... (The rest of your JSX UI remains exactly the same)
     <View style={styles.wrapper}>
-      {/* Gradient Header */}
       <LinearGradient
         colors={["#3b82f6", "#2563eb", "#1d4ed8"]}
         style={[styles.header, { paddingTop: insets.top + 10 }]}
       >
         <View style={styles.headerContent}>
-          {/* 🟢 Logo and Title Container */}
           <View style={styles.titleContainer}>
             <Image
               source={LOGO_IMG}
@@ -185,6 +564,8 @@ export default function ComplaintScreen() {
         </View>
       </LinearGradient>
 
+      {/* ... Rest of your UI code ... */}
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -198,9 +579,7 @@ export default function ComplaintScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Form Card */}
           <View style={styles.formCard}>
-            {/* Personal Info Section */}
             <View style={styles.sectionHeader}>
               <View style={styles.sectionIconContainer}>
                 <Text style={styles.sectionIcon}>👤</Text>
@@ -211,7 +590,7 @@ export default function ComplaintScreen() {
             <TextInputField
               label="Full Name *"
               value={name}
-              onChangeText={(text) => setName(text)}
+              onChangeText={setName}
               placeholder="Enter your name"
             />
 
@@ -223,7 +602,6 @@ export default function ComplaintScreen() {
               keyboardType="email-address"
             />
 
-            {/* Complaint Details Section */}
             <View style={[styles.sectionHeader, { marginTop: 24 }]}>
               <View style={styles.sectionIconContainer}>
                 <Text style={styles.sectionIcon}>📝</Text>
@@ -238,7 +616,6 @@ export default function ComplaintScreen() {
               placeholder="e.g. IT, HR, BOBFI, SBIFI"
             />
 
-            {/* Assets Selection */}
             <View style={styles.section}>
               <Text style={styles.label}>
                 <Text style={styles.labelIcon}>🔧</Text> Assets (select any) *
@@ -285,7 +662,6 @@ export default function ComplaintScreen() {
               placeholder="Cubical / Cabin / Desk number"
             />
 
-            {/* Assignment Section */}
             <View style={[styles.sectionHeader, { marginTop: 24 }]}>
               <View style={styles.sectionIconContainer}>
                 <Text style={styles.sectionIcon}>⚙️</Text>
@@ -306,7 +682,6 @@ export default function ComplaintScreen() {
                 >
                   <Picker.Item label="Select person..." value="" />
                   <Picker.Item label="Bhargav Suthar" value="Bhargav Suthar" />
-                  {/* <Picker.Item label="Jay Panchal" value="Hardware Team" /> */}
                 </Picker>
               </View>
             </View>
@@ -348,7 +723,6 @@ export default function ComplaintScreen() {
               </View>
             </View>
 
-            {/* Submit Button */}
             <View style={styles.submitSection}>
               {loading ? (
                 <View style={styles.loadingContainer}>
