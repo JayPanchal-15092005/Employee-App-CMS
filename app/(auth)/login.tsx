@@ -11,7 +11,7 @@ export default function LoginScreen() {
   React.useEffect(() => {
     GoogleSignin.configure({
       webClientId:
-        "43034011438-6m6g6amd1krbq84ncck1q6pqoup2oao9.apps.googleusercontent.com",
+        "122080548968-2nhb4ajonr1mg8to9ro5frdus44sesjs.apps.googleusercontent.com",
     });
   }, []);
 
