@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "@/constants/Config";
-import auth from "@react-native-firebase/auth"; // 🟢 CHANGED: Import Firebase
+import { Ionicons } from "@expo/vector-icons";
+import auth from "@react-native-firebase/auth";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -9,6 +10,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -26,6 +28,7 @@ export default function HistoryScreen() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     loadHistory();
@@ -62,8 +65,21 @@ export default function HistoryScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
+    setSearchQuery("");
     loadHistory();
   };
+
+  // This instantly filters the complaints array based on what the user types
+  const filteredComplaints = complaints.filter((item) => {
+    // i need to fix this issues
+    const searchLower = searchQuery.toLowerCase();
+    const matchDept = item.department.toLowerCase().includes(searchLower);
+    const matchDetail = item.complain_detail
+      .toLowerCase()
+      .includes(searchLower);
+
+    return matchDept || matchDetail; // Returns true if it matches either department or detail
+  });
 
   // 🟢 INITIAL LOADING SPINNER
   if (loading && !refreshing) {
@@ -78,6 +94,34 @@ export default function HistoryScreen() {
   return (
     <View style={styles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor="#f3f4f6" />
+
+      {/* 🟢 NEW: Search Bar UI */}
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#9CA3AF"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search department or details..."
+          placeholderTextColor="#9CA3AF"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          clearButtonMode="while-editing" // Adds an 'x' button on iOS
+        />
+        {/* Adds a custom 'x' button for Android when typing */}
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setSearchQuery("")}
+            style={styles.clearIcon}
+          >
+            <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       <FlatList
         contentContainerStyle={styles.container}
         data={complaints}
@@ -131,7 +175,7 @@ export default function HistoryScreen() {
               activeOpacity={0.8}
               onPress={() =>
                 router.push({
-                  pathname: "/Complain-details",
+                  pathname: "/complain-details",
                   params: {
                     id: item.id,
                     department: item.department,
@@ -167,8 +211,40 @@ const styles = StyleSheet.create({
     color: "#4B5563",
     fontWeight: "500",
   },
+
+  // 🟢 NEW: Search Bar Styles
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 48,
+    fontSize: 15,
+    color: "#1F2937",
+  },
+  clearIcon: {
+    padding: 4,
+  },
+
   container: {
-    flexGrow: 1, // 🟢 Important for ListEmptyComponent centering
+    flexGrow: 1,
     padding: 16,
     paddingBottom: 40,
   },
@@ -234,12 +310,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 15,
   },
-  // 🟢 Updated styles for empty state
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 100, // Centers it roughly in the middle
+    marginTop: 80,
   },
   emptyText: {
     fontSize: 18,

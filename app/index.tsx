@@ -27,7 +27,7 @@ export default function Index() {
 
   // 🟢 Redirect based on Firebase user state
   if (user) {
-    return <Redirect href="/(tabs)/form" />;
+    return <Redirect href="/(home)" />;
   }
 
   return <Redirect href="/(auth)/login" />;

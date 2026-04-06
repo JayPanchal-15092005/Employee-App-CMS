@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "@/constants/Config";
-import auth from "@react-native-firebase/auth"; // 🟢 CHANGED: Import Firebase
+import auth from "@react-native-firebase/auth";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -29,7 +29,6 @@ type Complaint = {
 export default function ComplaintDetailsScreen() {
   const router = useRouter();
   const { id, department, complain_detail, status } = useLocalSearchParams();
-  // 🟢 REMOVED: const { getToken } = useAuth();
 
   const [complaint, setComplaint] = useState<Complaint | null>({
     id: Number(id),
@@ -53,7 +52,7 @@ export default function ComplaintDetailsScreen() {
     try {
       setLoading(true);
 
-      // 🟢 UPDATED: Get Token from Firebase
+      // 🟢 UPDATED: we get Token from Firebase
       const user = auth().currentUser;
       if (!user) {
         setLoading(false);
@@ -62,8 +61,9 @@ export default function ComplaintDetailsScreen() {
       const token = await user.getIdToken();
 
       const res = await fetch(`${API_BASE_URL}/api/employee/complaints/${id}`, {
+        // i need to change this routes to the new backend routes
         headers: {
-          Authorization: `Bearer ${token}`, // 🟢 Send Firebase Token
+          Authorization: `Bearer ${token}`, // 🟢 Sending the Firebase Token
         },
       });
 

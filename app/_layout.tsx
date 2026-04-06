@@ -1,5 +1,4 @@
 import { API_BASE_URL } from "@/constants/Config";
-// 🟢 REMOVED: All Clerk imports
 import auth from "@react-native-firebase/auth";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
@@ -59,17 +58,20 @@ function AppLayout() {
 
         console.log("📤 Registering Token:", expoPushToken);
 
-        const response = await fetch(`${API_BASE_URL}/api/devices/register`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${authToken}`, // 🟢 Send Firebase Token
-            "Content-Type": "application/json",
+        const response = await fetch(
+          `${API_BASE_URL}/api/employee/devices/register`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${authToken}`, // 🟢 Send Firebase Token
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              expoPushToken,
+              email: user.email, // Optional: Send email for debugging
+            }),
           },
-          body: JSON.stringify({
-            expoPushToken,
-            email: user.email, // Optional: Send email for debugging
-          }),
-        });
+        );
 
         if (response.ok) {
           console.log("✅ Device registered successfully");
@@ -93,7 +95,7 @@ function AppLayout() {
 
     if (user && isAuthGroup) {
       // If logged in, go to home
-      router.replace("/(tabs)/form");
+      router.replace("/(home)");
     } else if (!user && !isAuthGroup) {
       // If NOT logged in, go to login
       router.replace("/(auth)/login");
@@ -108,13 +110,13 @@ function AppLayout() {
 
         if (data?.screen === "complaint-details" && data?.complaintId) {
           router.push({
-            pathname: "/Complain-details",
+            pathname: "/complain-details",
             params: { id: String(data.complaintId) },
           });
         }
 
         if (data?.screen === "history") {
-          router.push("/(tabs)/history");
+          router.push("/cms/history");
         }
       },
     );
@@ -134,13 +136,21 @@ function AppLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
+
+      {/* 🟢 Our New Hub and Modules (Replaces "tabs") */}
+      <Stack.Screen name="(home)/index" />
+      <Stack.Screen name="cms" />
+      <Stack.Screen name="daily-report" />
+      <Stack.Screen name="stationery-req" />
+      <Stack.Screen name="mob-recharge" />
+
+      {/* Make sure the complain-details screen is registered too! */}
+      <Stack.Screen name="complain-details" />
     </Stack>
   );
 }
 
 export default function RootLayout() {
-  // 🟢 REMOVED: ClerkProvider and TokenCache logic
   return (
     <SafeAreaProvider>
       <AppLayout />

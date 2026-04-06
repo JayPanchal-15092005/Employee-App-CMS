@@ -1,28 +1,38 @@
-import React from "react";
-import { StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  View,
+} from "react-native";
 
 type Props = { label?: string } & TextInputProps;
 
-export default function TextInputField({
-  label,
-  ...props
-}: Props) {
+export default function TextInputField({ label, style, ...props }: Props) {
+  // 🟢 NEW: Track if the user is currently typing in this box
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
     <View style={styles.container}>
-      {label ? (
-        <Text style={styles.label}>
-          {label}
-        </Text>
-      ) : null}
+      {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
-        // 🟢 Explicitly setting the text color to dark gray/black
         style={[
-          styles.input, 
+          styles.input,
           props.multiline && styles.multilineInput,
-          props.style // Allows you to pass extra styles from form.tsx
+          isFocused && styles.inputFocused, // 🟢 Apply blue border if focused
+          style, // Allows custom styles (like height) from your forms
         ]}
-        // 🟢 Explicitly setting the placeholder color
-        placeholderTextColor="#94a3b8" 
+        placeholderTextColor="#94a3b8"
+        // 🟢 Intercept the focus/blur events to change the colors
+        onFocus={(e) => {
+          setIsFocused(true);
+          if (props.onFocus) props.onFocus(e);
+        }}
+        onBlur={(e) => {
+          setIsFocused(false);
+          if (props.onBlur) props.onBlur(e);
+        }}
         {...props}
       />
     </View>
@@ -31,8 +41,8 @@ export default function TextInputField({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 12,
-    width: '100%',
+    marginBottom: 16, // Better spacing between inputs
+    width: "100%",
   },
   label: {
     marginBottom: 8,
@@ -41,17 +51,25 @@ const styles = StyleSheet.create({
     color: "#1e293b", // Slate-800
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#e2e8f0", // Gray-200/300
+    borderWidth: 1.5, // Slightly thicker border for a modern look
+    borderColor: "#e2e8f0", // Light gray when inactive
     borderRadius: 12,
     padding: 14,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f8fafc", // Very subtle gray background when inactive
     fontSize: 16,
-    // 🟢 CRITICAL: This ensures text is visible on white background
-    color: "#0f172a", // Slate-900 (Dark)
+    color: "#0f172a", // Slate-900 text
+  },
+  inputFocused: {
+    borderColor: "#3b82f6", // 🟢 Beautiful Blue border when active
+    backgroundColor: "#ffffff", // 🟢 Pure white background when active
+    shadowColor: "#3b82f6",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 2, // Slight pop-out effect on Android
   },
   multilineInput: {
-    height: 100,
-    textAlignVertical: 'top', // Ensures text starts at the top on Android
+    minHeight: 100,
+    textAlignVertical: "top", // Ensures text starts at the top left
   },
 });
