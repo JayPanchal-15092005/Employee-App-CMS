@@ -55,7 +55,7 @@ export default function HomeScreen() {
         <Text style={styles.sectionTitle}>Company Forms</Text>
 
         <View style={styles.grid}>
-          {/* 🟢 1. CMS Form Button (Working!) */}
+          {/* 🟢 1. CMS Form Button */}
           <TouchableOpacity
             style={styles.card}
             activeOpacity={0.8}
@@ -70,7 +70,7 @@ export default function HomeScreen() {
             <Text style={styles.cardSubtitle}>Hardware & Network Issues</Text>
           </TouchableOpacity>
 
-          {/* 🟡 2. Mobile Recharge (Coming Soon) */}
+          {/* 🟡 2. Mobile Recharge */}
           <TouchableOpacity
             style={styles.card}
             activeOpacity={0.8}
@@ -85,6 +85,7 @@ export default function HomeScreen() {
             <Text style={styles.cardSubtitle}>Request balance top-up</Text>
           </TouchableOpacity>
 
+          {/* 🔴 3. Stationery Req */}
           <TouchableOpacity
             style={styles.card}
             activeOpacity={0.8}
@@ -99,6 +100,7 @@ export default function HomeScreen() {
             <Text style={styles.cardSubtitle}>Pens, paper, supplies</Text>
           </TouchableOpacity>
 
+          {/* 🟠 4. Daily Report */}
           <TouchableOpacity
             style={styles.card}
             activeOpacity={0.8}
@@ -111,6 +113,21 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardTitle}>Daily Report</Text>
             <Text style={styles.cardSubtitle}>Submit EOD updates</Text>
+          </TouchableOpacity>
+
+          {/* 🟣 5. NEW: BenQ Quotation */}
+          <TouchableOpacity
+            style={styles.card}
+            activeOpacity={0.8}
+            onPress={() => router.push("/quotation/create")}
+          >
+            <View
+              style={[styles.iconContainer, { backgroundColor: "#e0e7ff" }]}
+            >
+              <Text style={styles.icon}>📄</Text>
+            </View>
+            <Text style={styles.cardTitle}>BenQ Quotation</Text>
+            <Text style={styles.cardSubtitle}>Generate PDF quotes</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

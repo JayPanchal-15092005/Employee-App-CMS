@@ -1,14 +1,13 @@
 import AssetCheckbox from "@/components/AssetCheckBox";
 import TextInputField from "@/components/TextInputField";
 import { API_BASE_URL } from "@/constants/Config";
+import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
 import { Picker } from "@react-native-picker/picker";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-// 🟢 NEW IMPORTS
-import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
 import {
   ActivityIndicator,
   Alert,
@@ -43,10 +42,6 @@ const ASSETS = [
   "IPD",
   "Other Complaint",
 ];
-
-// 🟢 Put your ImageKit PUBLIC key here (starts with 'public_')
-const IMAGEKIT_PUBLIC_KEY = "public_VySlhwDG+dbLA+gpbLvpiQ4jKFs=";
-const IMAGEKIT_UPLOAD_URL = "https://upload.imagekit.io/api/v1/files/upload";
 
 const LOGO_IMG = require("@/assets/images/icon.png");
 
@@ -101,47 +96,103 @@ export default function ComplaintScreen() {
     }
   };
 
-  // ☁️ 2. Function to upload to ImageKit
-  // ☁️ 2. Function to upload to ImageKit
-  const uploadImageToImageKit = async (uri: string) => {
-    try {
-      const authRes = await fetch(`${API_BASE_URL}/api/imagekit/auth`);
-      const { token, expire, signature } = await authRes.json();
+  // ☁️ 2. NEW: Function to upload to Google Drive via your Node.js Backend
+  // const uploadImageToDrive = async (uri: string, token: string) => {
+  //   try {
+  //     const formData = new FormData();
+  //     const filename = uri.split("/").pop() || `complaint_${Date.now()}.jpg`;
+  //     const match = /\.(\w+)$/.exec(filename);
+  //     const type = match ? `image/${match[1]}` : `image/jpeg`;
 
+  //     // ⚠️ The name "image" MUST match upload.single("image") in your Node.js route
+  //     formData.append("image", { uri: uri, name: filename, type } as any);
+
+  //     const response = await fetch(
+  //       `${API_BASE_URL}/api/employee/upload-image`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           // "Content-Type": "multipart/form-data",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: formData,
+  //       },
+  //     );
+
+  //     const result = await response.json();
+
+  //     if (!response.ok) {
+  //       throw new Error(result.error || "Google Drive upload failed");
+  //     }
+
+  //     if (result.success) {
+  //       return result.imageUrl; // Returns the special Google Drive display link!
+  //     } else {
+  //       throw new Error("Upload failed, no URL returned");
+  //     }
+  //   } catch (error) {
+  //     console.error("Frontend Upload Error:", error);
+  //     throw new Error(
+  //       "Failed to upload image to Google Drive. Please try again.",
+  //     );
+  //   }
+  // };
+
+  // ☁️ 2. DIAGNOSTIC Google Drive Upload Function
+  const uploadImageToDrive = async (uri: string, token: string) => {
+    try {
+      console.log("1. Starting upload process...");
       const formData = new FormData();
-      formData.append("file", {
-        uri,
-        name: `complaint_${Date.now()}.jpg`, // React Native needs this
-        type: "image/jpeg",
+      const filename = uri.split("/").pop() || `complaint_${Date.now()}.jpg`;
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+      // 🟢 FIX 1: Format the URI properly for both iOS and Android
+      const formattedUri =
+        Platform.OS === "ios" ? uri.replace("file://", "") : uri;
+
+      formData.append("image", {
+        uri: formattedUri,
+        name: filename,
+        type: type,
       } as any);
 
-      formData.append("fileName", `complaint_${Date.now()}.jpg`);
-      formData.append("publicKey", IMAGEKIT_PUBLIC_KEY);
-      formData.append("signature", signature);
-      formData.append("expire", expire);
-      formData.append("token", token);
-      formData.append("folder", "/complaints");
+      console.log(
+        "2. Sending request to:",
+        `${API_BASE_URL}/api/employee/upload-image`,
+      );
 
-      // 🟢 THE FIX IS HERE
-      const uploadRes = await fetch(IMAGEKIT_UPLOAD_URL, {
+      const response = await fetch(`${API_BASE_URL}api/employee/upload-image`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
-        // ❌ REMOVED: headers: { "Content-Type": "multipart/form-data" }
-        // React Native automatically sets the correct header for FormData!
       });
 
-      const uploadData = await uploadRes.json();
+      console.log("3. Server responded with status:", response.status);
 
-      // 🟢 ADDED SAFETY CHECK: This will warn you if ImageKit rejects it
-      if (!uploadRes.ok) {
-        console.error("ImageKit Rejected Upload:", uploadData);
-        throw new Error(uploadData.message || "ImageKit upload failed");
+      // 🟢 FIX 2: Read the RAW text before trying to parse JSON
+      const rawText = await response.text();
+      console.log("4. RAW SERVER RESPONSE:", rawText);
+
+      if (!response.ok) {
+        // This forces the actual server error to pop up on your phone screen!
+        throw new Error(
+          `Server Error ${response.status}: ${rawText.substring(0, 100)}`,
+        );
       }
 
-      return uploadData.url; // Returns the secure live image link
-    } catch (error) {
-      console.error("Image upload failed:", error);
-      throw new Error("Failed to upload image. Please try again.");
+      const result = JSON.parse(rawText);
+
+      if (result.success) {
+        return result.imageUrl;
+      } else {
+        throw new Error("Upload failed, no URL returned");
+      }
+    } catch (error: any) {
+      console.error("Frontend Upload Error:", error);
+      throw new Error(error.message || "Failed to upload image."); // Pass the real error up
     }
   };
 
@@ -170,10 +221,10 @@ export default function ComplaintScreen() {
         return;
       }
 
-      // 🟢 3. Handle Image Upload First
+      // 🟢 3. Handle Image Upload First (Now sending to your Node.js Google Drive route)
       let finalImageUrl = null;
       if (imageUri) {
-        finalImageUrl = await uploadImageToImageKit(imageUri);
+        finalImageUrl = await uploadImageToDrive(imageUri, token);
       }
 
       const assets = Object.keys(selected).filter((k) => selected[k]);
@@ -186,7 +237,7 @@ export default function ComplaintScreen() {
         complain_location: location || null,
         to_whom: toWhom || null,
         priority: priority || "Medium",
-        image_url: finalImageUrl, // 🟢 Add Image URL to payload
+        image_url: finalImageUrl, // 🟢 Save Google Drive URL to payload
       };
 
       const res = await fetch(`${API_BASE_URL}/api/employee/complaints`, {
@@ -215,7 +266,7 @@ export default function ComplaintScreen() {
       setLocation("");
       setToWhom("");
       setPriority("");
-      setImageUri(null); // Clear image
+      setImageUri(null);
     } catch (err: any) {
       console.error("Submit error", err);
       Alert.alert("Submit Failed", err.message || "Unknown error");
@@ -296,7 +347,7 @@ export default function ComplaintScreen() {
               label="Department *"
               value={department}
               onChangeText={setDepartment}
-              placeholder="e.g. IT, HR, BOBFI, SBIFI"
+              placeholder="e.g. HR, BOBFI, SBIFI"
             />
 
             <View style={styles.section}>
@@ -338,7 +389,7 @@ export default function ComplaintScreen() {
               style={{ height: 100 }}
             />
 
-            {/* 🟢 NEW: Camera Section */}
+            {/* 🟢 Camera Section */}
             <View style={styles.section}>
               <Text style={styles.label}>
                 <Text style={styles.labelIcon}>📸</Text> Hardware Photo
