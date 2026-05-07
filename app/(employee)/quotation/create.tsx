@@ -314,7 +314,14 @@ export default function CreateQuotation() {
           type: "application/pdf",
         } as any);
 
+        // 🟢 ADDED: All the extra data for the database!
         formData.append("clientName", customerName);
+        formData.append("address", customerAddress);
+        formData.append("model", selectedModel.id);
+        formData.append("size", selectedModel.size);
+        formData.append("qty", String(qty));
+        formData.append("unitPrice", String(selectedModel.price));
+        formData.append("totalPrice", String(grandTotal));
 
         fetch(
           "https://cms-backend-blond-one.vercel.app/api/employee/send-quotation",
@@ -324,7 +331,7 @@ export default function CreateQuotation() {
             // REMEMBER: Do NOT add headers here!
           },
         )
-          .then((res) => console.log("Background email request sent!"))
+          .then((res) => console.log("Background task sent!"))
           .catch((err) => console.log("Background email failed:", err));
       } catch (err) {
         console.log("FormData packaging failed", err);
