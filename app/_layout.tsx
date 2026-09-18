@@ -1,12 +1,8 @@
 import { API_BASE_URL } from "@/constants/Config";
-import {
-  getAuth,
-  getIdToken,
-  onAuthStateChanged,
-} from "@react-native-firebase/auth";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { Stack, useRouter, useSegments } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -24,30 +20,32 @@ function AppLayout() {
   const router = useRouter();
   const segments = useSegments();
 
-  // 🟢 NEW WAY: Initialize auth
-  const firebaseAuth = getAuth();
-
   // 🟢 TRACK AUTH STATE
   const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState(firebaseAuth.currentUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const registerRef = useRef(false); // Prevent duplicate registration
 
-  // 🟢 1. Handle Auth State Changes
+  // 🟢 1. Handle Auth State Changes with JWT
   useEffect(() => {
-    // 🟢 NEW WAY: Pass firebaseAuth into onAuthStateChanged
-    const subscriber = onAuthStateChanged(firebaseAuth, (u) => {
-      setUser(u);
-      if (initializing) setInitializing(false);
-    });
-    return subscriber;
+    const checkAuth = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("jwtToken");
+        setIsAuthenticated(!!token);
+      } catch (e) {
+        console.error("Auth check error:", e);
+      } finally {
+        setInitializing(false);
+      }
+    };
+    checkAuth();
   }, []);
 
-  // 🟢 2. Register Device Token (Auto-runs when user logs in)
+  // 🟢 2. Register Device Token
   useEffect(() => {
-    if (initializing || !user) return; // Wait for login
+    if (initializing || !isAuthenticated) return;
 
     const registerDevice = async () => {
-      if (registerRef.current) return; // Already registered in this session
+      if (registerRef.current) return;
 
       try {
         const projectId = Constants.expoConfig?.extra?.eas?.projectId;
@@ -61,10 +59,9 @@ function AppLayout() {
         });
         const expoPushToken = tokenData.data;
 
-        // 🟢 Get Firebase Token
-        // const authToken = await user.getIdToken();
-
-        const authToken = await getIdToken(user);
+        // 🟢 Get JWT Token
+        const authToken = await SecureStore.getItemAsync("jwtToken");
+        const email = await SecureStore.getItemAsync("userEmail");
 
         console.log("📤 Registering Token:", expoPushToken);
 
@@ -73,12 +70,12 @@ function AppLayout() {
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${authToken}`, // 🟢 Send Firebase Token
+              Authorization: `Bearer ${authToken}`, // 🟢 Send JWT Token
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
               expoPushToken,
-              email: user.email, // Optional: Send email for debugging
+              email: email || "",
             }),
           },
         );
@@ -95,7 +92,7 @@ function AppLayout() {
     };
 
     registerDevice();
-  }, [user, initializing]);
+  }, [isAuthenticated, initializing]);
 
   // 🟢 3. Protection Logic (Redirects)
   useEffect(() => {
@@ -103,14 +100,12 @@ function AppLayout() {
 
     const isAuthGroup = segments[0] === "(auth)";
 
-    if (user && isAuthGroup) {
-      // If logged in, go to home
+    if (isAuthenticated && isAuthGroup) {
       router.replace("/(home)");
-    } else if (!user && !isAuthGroup) {
-      // If NOT logged in, go to login
+    } else if (!isAuthenticated && !isAuthGroup) {
       router.replace("/(auth)/login");
     }
-  }, [user, initializing, segments]);
+  }, [isAuthenticated, initializing, segments]);
 
   // 🟢 4. Notification Tap Handler
   useEffect(() => {
@@ -133,7 +128,6 @@ function AppLayout() {
     return () => sub.remove();
   }, []);
 
-  // Show loading spinner while checking auth status
   if (initializing) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -147,14 +141,12 @@ function AppLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="(auth)" />
 
-      {/* 🟢 Our New Hub and Modules (Replaces "tabs") */}
       <Stack.Screen name="(home)/index" />
       <Stack.Screen name="cms" />
       <Stack.Screen name="daily-report" />
       <Stack.Screen name="stationery-req" />
       <Stack.Screen name="mob-recharge" />
 
-      {/* Make sure the complain-details screen is registered too! */}
       <Stack.Screen name="complain-details" />
     </Stack>
   );

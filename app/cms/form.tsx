@@ -1,8 +1,9 @@
+import * as SecureStore from 'expo-secure-store';
 import AssetCheckbox from "@/components/AssetCheckBox";
 import TextInputField from "@/components/TextInputField";
 import { API_BASE_URL } from "@/constants/Config";
 import { Ionicons } from "@expo/vector-icons";
-import { getAuth, getIdToken, signOut } from "@react-native-firebase/auth";
+
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
@@ -50,7 +51,7 @@ export default function ComplaintScreen() {
   const router = useRouter();
 
   // 🟢 NEW WAY: Initialize auth
-  const firebaseAuth = getAuth();
+  
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -69,7 +70,8 @@ export default function ComplaintScreen() {
   const handleSignOut = async () => {
     try {
       // 🟢 NEW WAY: Pass firebaseAuth to signOut
-      await signOut(firebaseAuth);
+      await SecureStore.deleteItemAsync("jwtToken");
+await SecureStore.deleteItemAsync("userEmail");;
       router.replace("/(auth)/login");
     } catch (err) {
       console.error("Sign out error", err);
@@ -177,8 +179,8 @@ export default function ComplaintScreen() {
     try {
       setLoading(true);
 
-      // const token = await currentUser.getIdToken();
-      const token = await getIdToken(currentUser);
+      // const token = await SecureStore.getItemAsync("jwtToken");
+      const token = await SecureStore.getItemAsync("jwtToken");
       if (!token) {
         Alert.alert("Session Expired", "Please sign in again.");
         router.replace("/(auth)/login");

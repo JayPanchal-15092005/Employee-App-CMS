@@ -1,6 +1,7 @@
+import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL } from "@/constants/Config";
 import { Ionicons } from "@expo/vector-icons";
-import { getAuth, getIdToken } from "@react-native-firebase/auth";
+
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -26,7 +27,7 @@ export default function HistoryScreen() {
   const router = useRouter();
 
   // 🟢 NEW WAY: Initialize auth
-  const firebaseAuth = getAuth();
+  
 
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,8 +49,8 @@ export default function HistoryScreen() {
         return;
       }
 
-      // const token = await user.getIdToken();
-      const token = await getIdToken(user); // 🟢 NEW WAY: Using getIdToken from Modular API
+      // const token = await SecureStore.getItemAsync("jwtToken");
+      const token = await SecureStore.getItemAsync("jwtToken"); // 🟢 NEW WAY: Using getIdToken from Modular API
 
       const res = await fetch(`${API_BASE_URL}/api/employee/complaints`, {
         headers: {

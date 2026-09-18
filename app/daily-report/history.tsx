@@ -1,5 +1,6 @@
+import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL } from "@/constants/Config";
-import { getAuth, getIdToken } from "@react-native-firebase/auth";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -25,7 +26,7 @@ export default function DailyReportHistory() {
   const router = useRouter();
 
   // 🟢 NEW WAY: Initialize auth
-  const firebaseAuth = getAuth();
+  
 
   const [reports, setReports] = useState<DailyReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,8 +44,8 @@ export default function DailyReportHistory() {
       // 🟢 NEW WAY: Use firebaseAuth to get the current user
       const currentUser = firebaseAuth.currentUser;
       if (!currentUser) return;
-      // const token = await currentUser.getIdToken();
-      const token = await getIdToken(currentUser);
+      // const token = await SecureStore.getItemAsync("jwtToken");
+      const token = await SecureStore.getItemAsync("jwtToken");
 
       const res = await fetch(`${API_BASE_URL}/api/employee/daily-reports`, {
         headers: { Authorization: `Bearer ${token}` },

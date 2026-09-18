@@ -1,5 +1,6 @@
+import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL } from "@/constants/Config";
-import { getAuth, getIdToken } from "@react-native-firebase/auth";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -53,15 +54,15 @@ export default function ComplaintDetailsScreen() {
       setLoading(true);
 
       // 🟢 NEW WAY: Initialize auth and get the current user
-      const firebaseAuth = getAuth();
+      
       const user = firebaseAuth.currentUser;
 
       if (!user) {
         setLoading(false);
         return;
       }
-      // const token = await user.getIdToken();
-      const token = await getIdToken(user); // 🟢 NEW WAY: Using getIdToken from Modular API
+      // const token = await SecureStore.getItemAsync("jwtToken");
+      const token = await SecureStore.getItemAsync("jwtToken"); // 🟢 NEW WAY: Using getIdToken from Modular API
 
       const res = await fetch(`${API_BASE_URL}/api/employee/complaints/${id}`, {
         // i need to change this routes to the new backend routes

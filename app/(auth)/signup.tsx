@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -18,48 +17,41 @@ import { API_BASE_URL } from "@/constants/Config";
 
 const LOGO_IMG = require("@/assets/images/icon.png");
 
-export default function LoginScreen() {
+export default function SignupScreen() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function onLoginPress() {
+  async function onSignupPress() {
     if (loading) return;
 
-    if (!email || !password) {
-      Alert.alert("Validation", "Please enter both email and password");
+    if (!name || !email || !password) {
+      Alert.alert("Validation", "Please fill in all fields");
       return;
     }
 
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}api/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Save the JWT token
-        await SecureStore.setItemAsync("jwtToken", data.token);
-
-        // Optional: Save user details if needed for notifications
-        await SecureStore.setItemAsync("userEmail", data.employee.email);
-
-        router.replace("/(employee)/cms/complain");
+        Alert.alert("Success", "Account created successfully! Please log in.");
+        router.replace("/(auth)/login");
       } else {
-        Alert.alert("Login Failed", data.error || "Invalid credentials");
+        Alert.alert("Registration Failed", data.error || "An error occurred");
       }
     } catch (error: any) {
-      console.error("Login Error:", error);
-      Alert.alert(
-        "Error",
-        "Could not connect to the server. Please check your network.",
-      );
+      console.error("Signup Error:", error);
+      Alert.alert("Error", "Could not connect to the server.");
     } finally {
       setLoading(false);
     }
@@ -74,8 +66,16 @@ export default function LoginScreen() {
         <View style={styles.logoContainer}>
           <Image source={LOGO_IMG} style={styles.logo} resizeMode="contain" />
           <Text style={styles.title}>CMS Portal</Text>
-          <Text style={styles.subtitle}>Employee Login</Text>
+          <Text style={styles.subtitle}>Employee Registration</Text>
         </View>
+
+        <TextInput
+          placeholder="Full Name"
+          placeholderTextColor="#94a3b8"
+          value={name}
+          onChangeText={setName}
+          style={styles.input}
+        />
 
         <TextInput
           placeholder="Employee Email"
@@ -97,37 +97,22 @@ export default function LoginScreen() {
         />
 
         <TouchableOpacity
-          style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-          onPress={onLoginPress}
+          style={[styles.signupButton, loading && styles.signupButtonDisabled]}
+          onPress={onSignupPress}
           disabled={loading}
           activeOpacity={0.7}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.loginButtonText}>Sign In</Text>
+            <Text style={styles.signupButtonText}>Sign Up</Text>
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => router.push("/(auth)/signup")}
-          style={{ paddingVertical: 12, marginBottom: 12 }}
-        >
-          <Text
-            style={{
-              fontSize: 14,
-              color: "#2563eb",
-              fontWeight: "600",
-              textAlign: "center",
-            }}
-          >
-            Don't have an account? Sign up
-          </Text>
+        <TouchableOpacity onPress={() => router.replace("/(auth)/login")} style={styles.loginLink}>
+            <Text style={styles.loginLinkText}>Already have an account? Log in</Text>
         </TouchableOpacity>
 
-        <Text style={styles.footerText}>
-          Secure access for Gujarat Infotech employees only.
-        </Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -180,32 +165,35 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     width: "100%",
   },
-  loginButton: {
+  signupButton: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2563eb",
+    backgroundColor: "#10b981", // Green for signup
     paddingVertical: 16,
     borderRadius: 16,
     width: "100%",
-    marginBottom: 24,
+    marginBottom: 16,
     elevation: 2,
-    shadowColor: "#2563eb",
+    shadowColor: "#10b981",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
-  loginButtonDisabled: {
+  signupButtonDisabled: {
     opacity: 0.7,
   },
-  loginButtonText: {
+  signupButtonText: {
     fontSize: 18,
     fontWeight: "700",
     color: "#ffffff",
   },
-  footerText: {
-    fontSize: 12,
-    color: "#9ca3af",
-    textAlign: "center",
-    lineHeight: 18,
+  loginLink: {
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  loginLinkText: {
+    fontSize: 14,
+    color: "#2563eb",
+    fontWeight: "600",
   },
 });

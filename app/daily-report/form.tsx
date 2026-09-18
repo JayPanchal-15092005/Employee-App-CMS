@@ -1,7 +1,8 @@
+import * as SecureStore from 'expo-secure-store';
 import TextInputField from "@/components/TextInputField";
 import { API_BASE_URL } from "@/constants/Config";
 // 🟢 NEW WAY: Import getAuth from Firebase Modular API
-import { getAuth, getIdToken } from "@react-native-firebase/auth";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -23,7 +24,7 @@ export default function DailyReportForm() {
   const router = useRouter();
 
   // 🟢 NEW WAY: Initialize auth and store the user globally for this component
-  const firebaseAuth = getAuth();
+  
   const currentUser = firebaseAuth.currentUser;
 
   const [workDetails, setWorkDetails] = useState("");
@@ -45,8 +46,8 @@ export default function DailyReportForm() {
 
     try {
       setLoading(true);
-      // const token = await currentUser.getIdToken();
-      const token = await getIdToken(currentUser);
+      // const token = await SecureStore.getItemAsync("jwtToken");
+      const token = await SecureStore.getItemAsync("jwtToken");
 
       const res = await fetch(`${API_BASE_URL}/api/employee/daily-reports`, {
         method: "POST",

@@ -1,4 +1,5 @@
-import { getAuth, signOut } from "@react-native-firebase/auth";
+import * as SecureStore from 'expo-secure-store';
+
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -13,46 +14,26 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+
+
+
 const LOGO_IMG = require("@/assets/images/icon.png");
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  // 🟢 NEW WAY: Initialize auth
-  const firebaseAuth = getAuth();
-  const user = firebaseAuth.currentUser;
+  const [userEmail, setUserEmail] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    SecureStore.getItemAsync("userEmail").then((email) => {
+      setUserEmail(email);
+    });
+  }, []);
 
   const handleSignOut = async () => {
     try {
-      // 🟢 NEW WAY: Pass firebaseAuth to the signOut function
-      await signOut(firebaseAuth);
-      router.replace("/(auth)/login");
-    } catch (err) {
-      Alert.alert("Error", "Failed to sign out");
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={["#3b82f6", "#2563eb", "#1d4ed8"]}
-        style={[styles.header, { paddingTop: insets.top + 20 }]}
-      >
-        <View style={styles.headerContent}>
-          <View style={styles.userInfo}>
-            <Image source={LOGO_IMG} style={styles.logo} resizeMode="contain" />
-            <View>
-              <Text style={styles.greeting}>Welcome back,</Text>
-              <Text style={styles.userName}>
-                {user?.displayName || "Employee"} 👋
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
-        </View>
+      await SecureStore.deleteItemAsync("jwtToken");
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>

@@ -1,23 +1,24 @@
-import { getAuth, onAuthStateChanged } from "@react-native-firebase/auth";
+import * as SecureStore from 'expo-secure-store';
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 export default function Index() {
-  // 🟢 NEW WAY: Initialize auth
-  const firebaseAuth = getAuth();
-
-  // 🟢 Custom loading state since Firebase auth is async
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(firebaseAuth.currentUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // 🟢 NEW WAY: Pass firebaseAuth into onAuthStateChanged
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
-    return unsubscribe;
+    const checkAuth = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("jwtToken");
+        setIsAuthenticated(!!token);
+      } catch (e) {
+        console.error("Auth check error in index:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkAuth();
   }, []);
 
   if (loading) {
@@ -28,8 +29,7 @@ export default function Index() {
     );
   }
 
-  // 🟢 Redirect based on Firebase user state
-  if (user) {
+  if (isAuthenticated) {
     return <Redirect href="/(home)" />;
   }
 

@@ -1,6 +1,7 @@
+import * as SecureStore from 'expo-secure-store';
 import TextInputField from "@/components/TextInputField"; // Using your upgraded, empathy-enhanced input!
 import { API_BASE_URL } from "@/constants/Config";
-import { getAuth, getIdToken } from "@react-native-firebase/auth";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -48,7 +49,7 @@ export default function StationeryForm() {
   const router = useRouter();
 
   // 🟢 NEW WAY: Initialize auth and store the user globally for this component
-  const firebaseAuth = getAuth();
+  
   const currentUser = firebaseAuth.currentUser;
 
   // 🟢 Fixed list of up to 4 items on the form
@@ -120,8 +121,8 @@ export default function StationeryForm() {
 
     try {
       setLoading(true);
-      // const token = await currentUser.getIdToken();
-      const token = await getIdToken(currentUser);
+      // const token = await SecureStore.getItemAsync("jwtToken");
+      const token = await SecureStore.getItemAsync("jwtToken");
 
       const res = await fetch(
         `${API_BASE_URL}/api/employee/stationery-requests`,
